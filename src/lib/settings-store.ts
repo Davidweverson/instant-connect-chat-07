@@ -1,9 +1,13 @@
 // Global settings store persisted in localStorage
+import { getFontStack } from "./fonts";
+
 
 export interface FlashChatSettings {
   // Appearance
   primaryColor: string; // HSL string like "190 80% 50%"
   fontSize: "small" | "medium" | "large";
+  appFont: string; // id do catálogo em src/lib/fonts.ts
+
   showAvatars: boolean;
   reducedMotion: boolean;
 
@@ -21,11 +25,16 @@ export interface FlashChatSettings {
 
   // Privacy
   showOnlineStatus: boolean;
+
+  // Cursor
+  cursorTheme: "auto" | "dark" | "light" | "flashmaterial";
 }
 
 export const DEFAULT_SETTINGS: FlashChatSettings = {
   primaryColor: "190 80% 50%",
   fontSize: "medium",
+  appFont: "cabin",
+
   showAvatars: true,
   reducedMotion: false,
   notificationsDisabled: false,
@@ -37,6 +46,7 @@ export const DEFAULT_SETTINGS: FlashChatSettings = {
   showTimestamp: true,
   language: "pt",
   showOnlineStatus: true,
+  cursorTheme: "auto",
 };
 
 const STORAGE_KEY = "flashchat_settings";
@@ -59,16 +69,42 @@ export function saveSettings(settings: FlashChatSettings) {
 export function applySettings(settings: FlashChatSettings) {
   const root = document.documentElement;
 
-  // Primary color
-  root.style.setProperty("--primary", settings.primaryColor);
-  root.style.setProperty("--ring", settings.primaryColor);
-  root.style.setProperty("--sidebar-primary", settings.primaryColor);
-  root.style.setProperty("--sidebar-ring", settings.primaryColor);
-  root.style.setProperty("--glow-primary", settings.primaryColor);
+  // Let the design-system stylesheet remain authoritative until the user
+  // explicitly chooses a custom color.
+  const primaryTokens = ["--primary", "--ring", "--sidebar-primary", "--sidebar-ring", "--glow-primary"];
+  if (settings.primaryColor === DEFAULT_SETTINGS.primaryColor) {
+    primaryTokens.forEach((token) => root.style.removeProperty(token));
+  } else {
+    primaryTokens.forEach((token) => root.style.setProperty(token, settings.primaryColor));
+  }
+
+  // Derivar cores do chat a partir da primária, respeitando o tema atual.
+  const m = settings.primaryColor.match(/(-?\d+(?:\.\d+)?)\s+(-?\d+(?:\.\d+)?)%\s+(-?\d+(?:\.\d+)?)%/);
+  if (m) {
+    const h = Math.round(+m[1]);
+    const s = Math.round(+m[2]);
+    const isLight = root.classList.contains("light");
+    if (isLight) {
+      root.style.setProperty("--chat-own", `${h} ${Math.min(70, s)}% 85%`);
+      root.style.setProperty("--chat-own-foreground", `${h} 40% 18%`);
+    } else {
+      root.style.setProperty("--chat-own", `${h} ${Math.min(70, s)}% 28%`);
+      root.style.setProperty("--chat-own-foreground", `${h} 25% 95%`);
+    }
+  }
 
   // Font size
   const sizes = { small: "13px", medium: "14px", large: "16px" };
   root.style.setProperty("--chat-font-size", sizes[settings.fontSize]);
+
+  // Fonte global da interface
+  const stack = getFontStack(settings.appFont);
+  if (stack && settings.appFont !== "cabin") {
+    root.style.setProperty("--app-font", stack);
+  } else {
+    root.style.removeProperty("--app-font");
+  }
+
 
   // Reduced motion
   if (settings.reducedMotion) {
@@ -76,7 +112,18 @@ export function applySettings(settings: FlashChatSettings) {
   } else {
     root.classList.remove("reduce-motion");
   }
+
+  // Cursor theme
+  root.classList.remove("cursor-dark", "cursor-light", "cursor-flashmaterial");
+  let resolved: "dark" | "light" | "flashmaterial";
+  if (settings.cursorTheme === "auto") {
+    resolved = root.classList.contains("light") ? "light" : "dark";
+  } else {
+    resolved = settings.cursorTheme;
+  }
+  root.classList.add(`cursor-${resolved}`);
 }
+
 
 // Theme management
 export type ThemeMode = "system" | "light" | "dark";
@@ -109,7 +156,14 @@ export function applyTheme(mode: ThemeMode) {
     root.classList.remove("dark");
     root.classList.add("light");
   }
+
+  // Re-apply settings completos para que cor primária, chat bubbles e cursor
+  // sejam recalculados conforme o tema atual.
+  try {
+    applySettings(loadSettings());
+  } catch {}
 }
+
 
 // Color presets
 export const COLOR_PRESETS = [

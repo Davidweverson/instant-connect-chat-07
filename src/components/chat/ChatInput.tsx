@@ -1,29 +1,38 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Send, Smile, Plus, Image as ImageIcon, X } from "lucide-react";
+import { Send, Smile, Plus, Image as ImageIcon, X, BarChart3 } from "lucide-react";
 import { AttachmentTray } from "./AttachmentTray";
 import { GifPicker } from "./GifPicker";
-import { createPendingAttachment, revokePendingAttachments, ACCEPTED_MEDIA_TYPES, isAcceptedFile, type PendingAttachment } from "@/lib/image-utils";
+import { MentionAutocomplete } from "./MentionAutocomplete";
+import { VoiceRecorderButton } from "./VoiceRecorder";
+import { PollCreatorModal } from "./PollCreatorModal";
+import { POLL_MARKER } from "@/lib/polls";
+import { createPendingAttachment, revokePendingAttachments, ACCEPTED_ANY_TYPES, isAcceptedFile, type PendingAttachment, type AttachmentData } from "@/lib/image-utils";
 import type { ReplyInfo } from "@/lib/chat-store";
 
 interface ChatInputProps {
   onSend: (text: string, attachments?: PendingAttachment[], replyToId?: string) => void;
+  onSendRaw?: (text: string, uploaded: AttachmentData[], replyToId?: string) => void;
   onTyping: () => void;
   uploading?: boolean;
   uploadProgress?: number | null;
   replyingTo?: ReplyInfo | null;
   onCancelReply?: () => void;
   sendWithEnter?: boolean;
+  userId?: string;
+  roomId?: string;
 }
 
 const QUICK_EMOJIS = ["😂", "🔥", "❤️", "👍", "😎", "🎉", "💯", "😭", "🤔", "👀", "✨", "🙌"];
 
-export function ChatInput({ onSend, onTyping, uploading, uploadProgress, replyingTo, onCancelReply, sendWithEnter = true }: ChatInputProps) {
+export function ChatInput({ onSend, onSendRaw, onTyping, uploading, uploadProgress, replyingTo, onCancelReply, sendWithEnter = true, userId, roomId }: ChatInputProps) {
   const [text, setText] = useState("");
   const [showEmojis, setShowEmojis] = useState(false);
   const [showGifs, setShowGifs] = useState(false);
   const [attachments, setAttachments] = useState<PendingAttachment[]>([]);
   const [dragOver, setDragOver] = useState(false);
+  const [mentionState, setMentionState] = useState<{ active: boolean; query: string; start: number }>({ active: false, query: "", start: 0 });
+  const [pollOpen, setPollOpen] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -66,8 +75,43 @@ export function ChatInput({ onSend, onTyping, uploading, uploadProgress, replyin
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setText(e.target.value);
+    const v = e.target.value;
+    setText(v);
     onTyping();
+    const caret = e.target.selectionStart || v.length;
+    let i = caret - 1;
+    while (i >= 0) {
+      const ch = v[i];
+      if (ch === "@") {
+        const prev = i === 0 ? " " : v[i - 1];
+        if (/[\s>(\[{,;.!?]/.test(prev) || i === 0) {
+          const q = v.slice(i + 1, caret);
+          if (/^[a-zA-Z0-9_\-]{0,30}$/.test(q)) {
+            setMentionState({ active: true, query: q, start: i });
+            return;
+          }
+        }
+        break;
+      }
+      if (/\s/.test(ch)) break;
+      i--;
+    }
+    setMentionState({ active: false, query: "", start: 0 });
+  };
+
+  const handleMentionSelect = (username: string) => {
+    if (!mentionState.active) return;
+    const caret = inputRef.current?.selectionStart || text.length;
+    const before = text.slice(0, mentionState.start);
+    const after = text.slice(caret);
+    const next = `${before}@${username} ${after}`;
+    setText(next);
+    setMentionState({ active: false, query: "", start: 0 });
+    setTimeout(() => {
+      const pos = before.length + username.length + 2;
+      inputRef.current?.focus();
+      inputRef.current?.setSelectionRange(pos, pos);
+    }, 0);
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -181,7 +225,13 @@ export function ChatInput({ onSend, onTyping, uploading, uploadProgress, replyin
         </div>
       )}
 
-      <form onSubmit={handleSubmit} className="p-3 border-t border-border">
+      <form onSubmit={handleSubmit} className="p-3 border-t border-border relative">
+        <MentionAutocomplete
+          visible={mentionState.active}
+          query={mentionState.query}
+          onSelect={handleMentionSelect}
+          onClose={() => setMentionState({ active: false, query: "", start: 0 })}
+        />
         <div className="flex items-center gap-2">
           <button
             type="button"
@@ -193,7 +243,7 @@ export function ChatInput({ onSend, onTyping, uploading, uploadProgress, replyin
           <input
             ref={fileInputRef}
             type="file"
-            accept={ACCEPTED_MEDIA_TYPES}
+            accept={ACCEPTED_ANY_TYPES}
             multiple
             className="hidden"
             onChange={handleFileChange}
@@ -213,6 +263,23 @@ export function ChatInput({ onSend, onTyping, uploading, uploadProgress, replyin
           >
             <Smile className="w-5 h-5" />
           </button>
+          {onSendRaw && userId && (
+            <>
+              <VoiceRecorderButton
+                userId={userId}
+                disabled={uploading}
+                onSend={(att) => onSendRaw("", [att as AttachmentData])}
+              />
+              <button
+                type="button"
+                onClick={() => setPollOpen(true)}
+                className="p-2.5 rounded-xl text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+                title="Criar enquete"
+              >
+                <BarChart3 className="w-5 h-5" />
+              </button>
+            </>
+          )}
           <input
             ref={inputRef}
             type="text"
@@ -237,6 +304,16 @@ export function ChatInput({ onSend, onTyping, uploading, uploadProgress, replyin
           </motion.button>
         </div>
       </form>
+      {onSendRaw && userId && (
+        <PollCreatorModal
+          open={pollOpen}
+          onClose={() => setPollOpen(false)}
+          userId={userId}
+          roomId={roomId}
+          onCreated={(pollId) => onSendRaw(`${POLL_MARKER}${pollId}`, [])}
+        />
+      )}
     </div>
   );
 }
+

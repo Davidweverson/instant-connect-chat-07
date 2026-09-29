@@ -23,11 +23,14 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
   const [settings, setSettings] = useState<FlashChatSettings>(loadSettings);
   const [theme, setThemeState] = useState<ThemeMode>(loadTheme);
 
-  // Apply on mount
+  // Apply whenever settings or theme change so visual controls update immediately.
   useEffect(() => {
     applySettings(settings);
+  }, [settings]);
+
+  useEffect(() => {
     applyTheme(theme);
-  }, []);
+  }, [theme]);
 
   // Listen for system theme changes
   useEffect(() => {

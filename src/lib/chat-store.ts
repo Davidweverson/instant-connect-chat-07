@@ -2,6 +2,9 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { playMessageSound } from "@/lib/notification-sounds";
 import { uploadAttachment, type AttachmentData, type PendingAttachment } from "@/lib/image-utils";
+import { toast } from "@/hooks/use-toast";
+import { recordMentions } from "@/lib/mentions";
+import { showBrowserNotification } from "@/lib/browser-notifications";
 import type { RealtimeChannel } from "@supabase/supabase-js";
 
 export interface MessageAttachment {
@@ -11,6 +14,8 @@ export interface MessageAttachment {
   height: number;
   fileName: string;
   size: number;
+  mimeType?: string;
+  kind?: string;
 }
 
 export interface ReplyInfo {
@@ -29,6 +34,9 @@ export interface Message {
   roomId: string;
   attachments: MessageAttachment[];
   replyTo: ReplyInfo | null;
+  isEdited?: boolean;
+  editedAt?: Date | null;
+  isPinned?: boolean;
 }
 
 export interface Room {
@@ -77,6 +85,8 @@ async function loadAttachments(messageId: string, messageType: string): Promise<
     height: a.height || 0,
     fileName: a.file_name || "",
     size: a.size || 0,
+    mimeType: a.mime_type || undefined,
+    kind: a.kind || undefined,
   }));
 }
 
@@ -159,6 +169,9 @@ export function useChatStore(userId: string, username: string) {
             roomId: m.room_id,
             attachments,
             replyTo,
+            isEdited: !!m.is_edited,
+            editedAt: m.edited_at ? new Date(m.edited_at) : null,
+            isPinned: !!m.is_pinned,
           };
         })
       );
@@ -194,10 +207,43 @@ export function useChatStore(userId: string, username: string) {
                 roomId: m.room_id,
                 attachments,
                 replyTo,
+                isEdited: !!m.is_edited,
+                editedAt: m.edited_at ? new Date(m.edited_at) : null,
+                isPinned: !!m.is_pinned,
               },
             ];
           });
-          if (!isOwnMessage) playMessageSound();
+          if (!isOwnMessage) {
+            playMessageSound();
+            const mentionsMe = !!m.text && new RegExp(`@${username}\\b`, "i").test(m.text);
+            const room = rooms.find((r) => r.id === m.room_id);
+            showBrowserNotification({
+              title: mentionsMe ? `${profile.username} te mencionou` : `${profile.username} em #${room?.name?.trim() || m.room_id}`,
+              body: m.text || "📎 Anexo",
+              tag: `chat-${m.room_id}`,
+              url: "/",
+            });
+          }
+        }
+      )
+      .on(
+        "postgres_changes",
+        { event: "UPDATE", schema: "public", table: "chat_messages", filter: `room_id=eq.${currentRoom}` },
+        (payload) => {
+          const m = payload.new as any;
+          setMessages((prev) =>
+            prev.map((msg) =>
+              msg.id === m.id
+                ? {
+                    ...msg,
+                    text: m.text,
+                    isEdited: !!m.is_edited,
+                    editedAt: m.edited_at ? new Date(m.edited_at) : null,
+                    isPinned: !!m.is_pinned,
+                  }
+                : msg
+            )
+          );
         }
       )
       .on(
@@ -213,7 +259,7 @@ export function useChatStore(userId: string, username: string) {
     return () => {
       supabase.removeChannel(msgChannel);
     };
-  }, [currentRoom, loadMessages]);
+  }, [currentRoom, loadMessages, userId, username, rooms]);
 
   // Global listener for unread counts on other rooms
   useEffect(() => {
@@ -320,6 +366,20 @@ export function useChatStore(userId: string, username: string) {
 
       if (msgError) {
         console.error("[ChatStore] Failed to insert message:", msgError);
+        const raw = msgError.message || "";
+        let title = "Erro ao enviar";
+        let description = "Não foi possível enviar sua mensagem. Tente novamente.";
+        if (raw.includes("DUPLICATE_MESSAGE")) {
+          title = "Mensagem duplicada";
+          description = "Você acabou de enviar essa mesma mensagem. Tente algo diferente.";
+        } else if (raw.includes("RATE_LIMIT")) {
+          title = "Calma aí!";
+          description = "Você está enviando mensagens muito rápido. Aguarde um momento.";
+        } else if (raw.includes("MESSAGE_TOO_LONG")) {
+          title = "Mensagem muito longa";
+          description = "Sua mensagem excede o limite de 2000 caracteres.";
+        }
+        toast({ title, description, variant: "destructive" });
         setUploading(false);
         setUploadProgress(null);
         return;
@@ -336,19 +396,125 @@ export function useChatStore(userId: string, username: string) {
             height: a.height,
             file_name: a.fileName,
             size: a.size,
+            mime_type: a.mimeType,
+            kind: a.kind || "image",
           }))
         );
+      }
+
+      // Push notifications: dispara fire-and-forget para inscritos
+      if (msgData) {
+        const room = ROOMS.find((r) => r.id === currentRoom) || rooms.find((r) => r.id === currentRoom);
+        const body = text || "📎 Anexo";
+        supabase.functions
+          .invoke("send-push", {
+            body: {
+              type: "chat",
+              senderId: userId,
+              senderName: username,
+              body,
+              url: "/",
+              roomName: room?.name?.trim() || currentRoom,
+            },
+          })
+          .catch((e) => console.warn("[push] invoke failed", e));
+
+        // Registra menções (@username)
+        if (text) {
+          recordMentions({
+            text,
+            fromUserId: userId,
+            fromUsername: username,
+            messageId: msgData.id,
+            messageKind: "chat",
+            roomId: currentRoom,
+            preview: text,
+          }).catch(() => {});
+        }
       }
 
       setUploading(false);
       setUploadProgress(null);
     },
+    [username, currentRoom, userId, rooms]
+  );
+
+  const sendRawMessage = useCallback(
+    async (text: string, uploaded: AttachmentData[], replyToId?: string) => {
+      const { data: msgData, error: msgError } = await supabase
+        .from("chat_messages")
+        .insert({
+          text: text || "",
+          sender: username,
+          room_id: currentRoom,
+          user_id: userId,
+          reply_to_id: replyToId || null,
+        } as any)
+        .select("id")
+        .single();
+      if (msgError) {
+        console.error("[ChatStore] sendRaw failed:", msgError);
+        toast({ title: "Erro ao enviar", description: msgError.message, variant: "destructive" });
+        return;
+      }
+      if (msgData && uploaded.length > 0) {
+        await supabase.from("message_attachments").insert(
+          uploaded.map((a) => ({
+            message_id: msgData.id,
+            message_type: "chat",
+            url: a.url,
+            thumbnail_url: a.thumbnailUrl,
+            width: a.width,
+            height: a.height,
+            file_name: a.fileName,
+            size: a.size,
+            mime_type: a.mimeType,
+            kind: a.kind || "file",
+          }))
+        );
+      }
+    },
     [username, currentRoom, userId]
   );
+
 
   const deleteMessage = useCallback(async (messageId: string) => {
     await supabase.from("chat_messages").delete().eq("id", messageId);
   }, []);
+
+  const editMessage = useCallback(async (messageId: string, newText: string) => {
+    const trimmed = newText.trim();
+    if (!trimmed) return;
+    const { error } = await supabase
+      .from("chat_messages")
+      .update({ text: trimmed, is_edited: true, edited_at: new Date().toISOString() } as any)
+      .eq("id", messageId);
+    if (error) {
+      toast({
+        title: "Não foi possível editar",
+        description: "Você só pode editar suas próprias mensagens nos primeiros 5 minutos.",
+        variant: "destructive",
+      });
+    }
+  }, []);
+
+  const togglePin = useCallback(async (messageId: string, currentlyPinned: boolean) => {
+    const { error } = await supabase
+      .from("chat_messages")
+      .update({
+        is_pinned: !currentlyPinned,
+        pinned_by: !currentlyPinned ? userId : null,
+        pinned_at: !currentlyPinned ? new Date().toISOString() : null,
+      } as any)
+      .eq("id", messageId);
+    if (error) {
+      toast({
+        title: "Não foi possível fixar",
+        description: "Apenas administradores podem fixar mensagens.",
+        variant: "destructive",
+      });
+    }
+  }, [userId]);
 
   const sendTyping = useCallback(() => {
     if (channelRef.current) {
@@ -370,7 +536,10 @@ export function useChatStore(userId: string, username: string) {
     typingUsers,
     onlineUsers,
     sendMessage,
+    sendRawMessage,
     deleteMessage,
+    editMessage,
+    togglePin,
     sendTyping,
     uploading,
     uploadProgress,
@@ -379,3 +548,4 @@ export function useChatStore(userId: string, username: string) {
     currentRoomData,
   };
 }
+

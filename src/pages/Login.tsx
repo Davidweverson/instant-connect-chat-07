@@ -1,8 +1,14 @@
 import { useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, useSearchParams, Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { MessageCircle, Zap, ArrowRight, Mail, Lock } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
+
+function safeNext(next: string | null): string | null {
+  if (!next) return null;
+  if (!next.startsWith("/") || next.startsWith("//")) return null;
+  return next;
+}
 
 export default function Login() {
   const [email, setEmail] = useState("");
@@ -11,6 +17,8 @@ export default function Login() {
   const [loading, setLoading] = useState(false);
   const { signIn } = useAuth();
   const navigate = useNavigate();
+  const [params] = useSearchParams();
+  const next = safeNext(params.get("next"));
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -24,7 +32,7 @@ export default function Login() {
     setLoading(true);
     try {
       await signIn(email, password);
-      navigate("/dashboard");
+      navigate(next ?? "/dashboard");
     } catch (err: any) {
       setError(err.message || "Erro inesperado");
     } finally {
@@ -32,13 +40,9 @@ export default function Login() {
     }
   };
 
-  return (
-    <div className="flex min-h-screen items-center justify-center bg-background relative overflow-hidden">
-      <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none">
-        <div className="absolute top-1/4 left-1/4 w-[500px] h-[500px] bg-primary/8 rounded-full blur-[120px] animate-pulse" />
-        <div className="absolute bottom-1/4 right-1/4 w-[400px] h-[400px] bg-accent/8 rounded-full blur-[100px] animate-pulse" style={{ animationDelay: "1s" }} />
-      </div>
 
+  return (
+    <div className="flex min-h-screen items-center justify-center bg-transparent relative overflow-hidden">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -117,10 +121,11 @@ export default function Login() {
 
         <p className="text-center text-sm text-muted-foreground mt-4">
           Não tem conta?{" "}
-          <Link to="/register" className="text-primary hover:underline font-medium">
+          <Link to={next ? `/register?next=${encodeURIComponent(next)}` : "/register"} className="text-primary hover:underline font-medium">
             Criar conta
           </Link>
         </p>
+
       </motion.div>
     </div>
   );

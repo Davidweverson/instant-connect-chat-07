@@ -1,9 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import { motion, AnimatePresence } from "framer-motion";
 import { Search, X, Loader2 } from "lucide-react";
-
-const GIPHY_API_KEY = "GlVGYHkr3WSBnllca54iNt0yFbjz7L65";
-const GIPHY_BASE = "https://api.giphy.com/v1/gifs";
+import { motion, AnimatePresence } from "framer-motion";
+import { supabase } from "@/integrations/supabase/client";
 
 interface GifResult {
   id: string;
@@ -21,22 +19,12 @@ interface GifPickerProps {
 }
 
 async function searchGifs(query: string, offset = 0): Promise<GifResult[]> {
-  const endpoint = query.trim()
-    ? `${GIPHY_BASE}/search?api_key=${GIPHY_API_KEY}&q=${encodeURIComponent(query)}&limit=20&offset=${offset}&rating=pg-13&lang=pt`
-    : `${GIPHY_BASE}/trending?api_key=${GIPHY_API_KEY}&limit=20&offset=${offset}&rating=pg-13`;
-
-  const res = await fetch(endpoint);
-  if (!res.ok) return [];
-  const json = await res.json();
-
-  return (json.data || []).map((g: any) => ({
-    id: g.id,
-    title: g.title || "",
-    preview: g.images?.fixed_width_small?.url || g.images?.fixed_width?.url || "",
-    original: g.images?.original?.url || "",
-    width: parseInt(g.images?.original?.width || "0", 10),
-    height: parseInt(g.images?.original?.height || "0", 10),
-  }));
+  const params = new URLSearchParams({ q: query.trim(), offset: String(offset) });
+  const { data, error } = await supabase.functions.invoke(`giphy-proxy?${params.toString()}`, {
+    method: "GET",
+  });
+  if (error || !data?.data) return [];
+  return data.data as GifResult[];
 }
 
 export function GifPicker({ open, onClose, onSelect }: GifPickerProps) {

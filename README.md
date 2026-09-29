@@ -1,108 +1,73 @@
-# Remix of FlashChat BETA
+# Welcome to your Lovable project
 
-Crie um site de chat em tempo real para conversas entre amigos, focado em simplicidade, velocidade e visual moderno.
+## Project info
 
-OBJETIVO
+**URL**: https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID
 
-Desenvolver uma aplicação web de chat semelhante ao Discord, WhatsApp e Instagram, porém sem sistema de login, cadastro ou criação de conta. O usuário entra no site e já pode conversar imediatamente.
+## How can I edit this code?
 
-FUNCIONALIDADES PRINCIPAIS
+There are several ways of editing your application.
 
-- Chat em tempo real (WebSocket ou tecnologia equivalente)
+**Use Lovable**
 
-- Entrada direta no chat sem cadastro
+Simply visit the [Lovable Project](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and start prompting.
 
-- Campo opcional para escolher um nome/apelido antes de entrar
+Changes made via Lovable will be committed automatically to this repo.
 
-- Mensagens aparecem instantaneamente para todos
+**Use your preferred IDE**
 
-- Diferenciação visual entre mensagens próprias e de outros usuários
+If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
 
-- Exibição de horário das mensagens
+The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
 
-- Scroll automático para a última mensagem
-
-- Indicação visual quando alguém está digitando
-
-- Sistema simples de salas (ex: “Sala Geral”, “Sala 2”, etc.)
-
-INTERFACE E DESIGN
-
-- Layout inspirado em Discord, WhatsApp e Instagram
-
-- Interface limpa, amigável e moderna
-
-- Tema escuro por padrão (dark mode)
-
-- Cantos arredondados, sombras suaves e blur (glassmorphism leve)
-
-- Animações suaves ao enviar/receber mensagens
-
-- Ícones minimalistas e modernos
-
-- Fonte legível e atual (ex: Inter, Poppins ou similar)
-
-- Área de mensagens central
-
-- Barra lateral opcional com salas ou usuários online
-
-EXPERIÊNCIA DO USUÁRIO
-
-- Interface responsiva (funciona bem em celular, tablet e PC)
-
-- Entrada simples: escolher nome → entrar no chat
-
-- Sem anúncios, sem distrações
-
-- Feedback visual ao enviar mensagem
-
-- Suporte a emojis básicos
-
-- Mensagens com bolhas estilo apps de chat
-
-TECNOLOGIA SUGERIDA
-
-- Front-end: HTML, CSS, JavaScript (ou React/Vue)
-
-- Back-end: Node.js com WebSocket (Socket.io ou similar)
-
-- Sem banco de dados complexo (mensagens podem ser temporárias)
-
-- Foco em performance e baixo consumo
-
-RESTRIÇÕES
-
-- Não exigir login, e-mail ou senha
-
-- Não exigir criação de conta
-
-- Não salvar dados pessoais
-
-- Acesso imediato ao chat
-
-OBJETIVO FINAL
-
-Criar um site de chat simples, bonito e rápido para uso entre amigos da escola, com aparência profissional e experiência semelhante aos principais aplicativos de mensagens, mas sem burocracia.
-
-This project was built with [Lovable](https://lovable.dev).
-
-**Live app**: https://instant-connect-chat-07.lovable.app
-
-## Build with Lovable
-
-Continue developing this project in the [Lovable editor](https://lovable.dev/projects/eb74042e-ea3d-4bc8-9b34-bc8119e59848).
-
-- **Ship faster**: describe what you want to build and Lovable handles the code.
-- **Stay in sync**: every change made in Lovable is committed straight to this repository.
-- **Full ownership**: this code is yours. Push to `main` on GitHub and your changes sync back into Lovable, ready for your next prompt.
-
-## Development
-
-Prefer working locally? You need Node.js and npm — [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating).
+Follow these steps:
 
 ```sh
-git clone <this-repository-url>
-cd <repository-name>
+# Step 1: Clone the repository using the project's Git URL.
+git clone <YOUR_GIT_URL>
+
+# Step 2: Navigate to the project directory.
+cd <YOUR_PROJECT_NAME>
+
+# Step 3: Install the necessary dependencies.
 npm i
+
+# Step 4: Start the development server with auto-reloading and an instant preview.
 npm run dev
 ```
+
+**Edit a file directly in GitHub**
+
+- Navigate to the desired file(s).
+- Click the "Edit" button (pencil icon) at the top right of the file view.
+- Make your changes and commit the changes.
+
+**Use GitHub Codespaces**
+
+- Navigate to the main page of your repository.
+- Click on the "Code" button (green button) near the top right.
+- Select the "Codespaces" tab.
+- Click on "New codespace" to launch a new Codespace environment.
+- Edit files directly within the Codespace and commit and push your changes once you're done.
+
+## What technologies are used for this project?
+
+This project is built with:
+
+- Vite
+- TypeScript
+- React
+- shadcn-ui
+- Tailwind CSS
+
+## How can I deploy this project?
+
+Simply open [Lovable](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and click on Share -> Publish.
+
+## Can I connect a custom domain to my Lovable project?
+
+Yes, you can!
+
+To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+
+Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)

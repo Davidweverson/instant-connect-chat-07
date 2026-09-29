@@ -2,6 +2,9 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { playMessageSound } from "@/lib/notification-sounds";
 import { uploadAttachment, type AttachmentData, type PendingAttachment } from "@/lib/image-utils";
+import { toast } from "@/hooks/use-toast";
+import { recordMentions } from "@/lib/mentions";
+import { showBrowserNotification } from "@/lib/browser-notifications";
 
 export interface DMAttachment {
   url: string;
@@ -10,6 +13,8 @@ export interface DMAttachment {
   height: number;
   fileName: string;
   size: number;
+  mimeType?: string;
+  kind?: string;
 }
 
 export interface DMReplyInfo {
@@ -27,6 +32,9 @@ export interface DirectMessage {
   timestamp: Date;
   attachments: DMAttachment[];
   replyTo: DMReplyInfo | null;
+  isEdited?: boolean;
+  editedAt?: Date | null;
+  isPinned?: boolean;
 }
 
 async function loadAttachments(messageId: string): Promise<DMAttachment[]> {
@@ -43,6 +51,8 @@ async function loadAttachments(messageId: string): Promise<DMAttachment[]> {
     height: a.height || 0,
     fileName: a.file_name || "",
     size: a.size || 0,
+    mimeType: a.mime_type,
+    kind: a.kind,
   }));
 }
 
@@ -58,7 +68,7 @@ async function loadDMReplyInfo(replyToId: string | null, senderNameMap: Map<stri
   return { id: data.id, senderName, text: data.text };
 }
 
-export function useDirectMessages(userId: string, friendId: string | null, friendUsername?: string) {
+export function useDirectMessages(userId: string, friendId: string | null, friendUsername?: string, currentUsername?: string) {
   const [messages, setMessages] = useState<DirectMessage[]>([]);
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState<number | null>(null);
@@ -68,7 +78,6 @@ export function useDirectMessages(userId: string, friendId: string | null, frien
     friendIdRef.current = friendId;
   }, [friendId]);
 
-  // Build a name map for resolving reply sender names
   const buildNameMap = useCallback((): Map<string, string> => {
     const map = new Map<string, string>();
     map.set(userId, "Você");
@@ -106,6 +115,9 @@ export function useDirectMessages(userId: string, friendId: string | null, frien
             timestamp: new Date(m.created_at),
             attachments,
             replyTo,
+            isEdited: !!m.is_edited,
+            editedAt: m.edited_at ? new Date(m.edited_at) : null,
+            isPinned: !!m.is_pinned,
           };
         })
       );
@@ -117,7 +129,6 @@ export function useDirectMessages(userId: string, friendId: string | null, frien
     loadMessages();
   }, [loadMessages]);
 
-  // Realtime subscription
   useEffect(() => {
     if (!userId || !friendId) return;
 
@@ -150,11 +161,42 @@ export function useDirectMessages(userId: string, friendId: string | null, frien
                   timestamp: new Date(m.created_at),
                   attachments,
                   replyTo,
+                  isEdited: !!m.is_edited,
+                  editedAt: m.edited_at ? new Date(m.edited_at) : null,
+                  isPinned: !!m.is_pinned,
                 },
               ];
             });
-            if (!isOwnMessage) playMessageSound();
+            if (!isOwnMessage) {
+              playMessageSound();
+              showBrowserNotification({
+                title: `Mensagem de ${friendUsername || "alguém"}`,
+                body: m.text || "📎 Anexo",
+                tag: `dm-${m.sender_id}`,
+                url: "/",
+              });
+            }
           }
+        }
+      )
+      .on(
+        "postgres_changes",
+        { event: "UPDATE", schema: "public", table: "direct_messages" },
+        (payload) => {
+          const m = payload.new as any;
+          setMessages((prev) =>
+            prev.map((msg) =>
+              msg.id === m.id
+                ? {
+                    ...msg,
+                    text: m.text,
+                    isEdited: !!m.is_edited,
+                    editedAt: m.edited_at ? new Date(m.edited_at) : null,
+                    isPinned: !!m.is_pinned,
+                  }
+                : msg
+            )
+          );
         }
       )
       .on(
@@ -193,15 +235,16 @@ export function useDirectMessages(userId: string, friendId: string | null, frien
             );
             attachmentData.push(att);
           }
-        } catch (err) {
+        } catch (err: any) {
           console.error("Upload failed:", err);
+          toast({ title: "Falha no upload", description: err?.message || "Tente novamente.", variant: "destructive" });
           setUploading(false);
           setUploadProgress(null);
           return;
         }
       }
 
-      const { data: msgData } = await supabase
+      const { data: msgData, error: msgErr } = await supabase
         .from("direct_messages")
         .insert({
           sender_id: userId,
@@ -212,6 +255,17 @@ export function useDirectMessages(userId: string, friendId: string | null, frien
         } as any)
         .select("id")
         .single();
+
+      if (msgErr) {
+        const raw = msgErr.message || "";
+        let title = "Erro ao enviar";
+        let description = "Tente novamente.";
+        if (raw.includes("BANNED_WORD")) { title = "Palavra proibida"; description = "Sua mensagem contém uma palavra não permitida."; }
+        toast({ title, description, variant: "destructive" });
+        setUploading(false);
+        setUploadProgress(null);
+        return;
+      }
 
       if (msgData && attachmentData.length > 0) {
         await supabase.from("message_attachments").insert(
@@ -224,19 +278,117 @@ export function useDirectMessages(userId: string, friendId: string | null, frien
             height: a.height,
             file_name: a.fileName,
             size: a.size,
+            mime_type: a.mimeType,
+            kind: a.kind || "image",
           }))
         );
+      }
+
+      // Push para o destinatário
+      if (msgData) {
+        const body = text || "📎 Anexo";
+        supabase.functions
+          .invoke("send-push", {
+            body: {
+              type: "dm",
+              recipientUserIds: [friendId],
+              senderId: userId,
+              senderName: currentUsername || "Alguém",
+              body,
+              url: "/",
+            },
+          })
+          .catch((e) => console.warn("[push] dm invoke failed", e));
+
+        // Menções (caso o usuário se mencione no DM, geralmente não)
+        if (text && currentUsername) {
+          recordMentions({
+            text,
+            fromUserId: userId,
+            fromUsername: currentUsername,
+            messageId: msgData.id,
+            messageKind: "dm",
+            conversationUserId: friendId,
+            preview: text,
+          }).catch(() => {});
+        }
       }
 
       setUploading(false);
       setUploadProgress(null);
     },
-    [userId, friendId]
+    [userId, friendId, currentUsername]
   );
 
   const deleteMessage = useCallback(async (messageId: string) => {
     await supabase.from("direct_messages").delete().eq("id", messageId);
   }, []);
 
-  return { messages, sendMessage, deleteMessage, uploading, uploadProgress };
+  const editMessage = useCallback(async (messageId: string, newText: string) => {
+    const trimmed = newText.trim();
+    if (!trimmed) return;
+    const { error } = await supabase
+      .from("direct_messages")
+      .update({ text: trimmed, is_edited: true, edited_at: new Date().toISOString() } as any)
+      .eq("id", messageId);
+    if (error) {
+      toast({
+        title: "Não foi possível editar",
+        description: "Você só pode editar nos primeiros 5 minutos.",
+        variant: "destructive",
+      });
+    }
+  }, []);
+
+  const togglePin = useCallback(async (messageId: string, currentlyPinned: boolean) => {
+    const { error } = await supabase
+      .from("direct_messages")
+      .update({
+        is_pinned: !currentlyPinned,
+        pinned_at: !currentlyPinned ? new Date().toISOString() : null,
+      } as any)
+      .eq("id", messageId);
+    if (error) {
+      toast({ title: "Não foi possível fixar", variant: "destructive" });
+    }
+  }, []);
+
+  const sendRawMessage = useCallback(
+    async (text: string, uploaded: AttachmentData[], replyToId?: string) => {
+      if (!friendId) return;
+      const { data: msgData, error } = await supabase
+        .from("direct_messages")
+        .insert({
+          sender_id: userId,
+          receiver_id: friendId,
+          text: text || null,
+          reply_to_id: replyToId || null,
+        } as any)
+        .select("id")
+        .single();
+      if (error) {
+        toast({ title: "Erro ao enviar", description: error.message, variant: "destructive" });
+        return;
+      }
+      if (msgData && uploaded.length > 0) {
+        await supabase.from("message_attachments").insert(
+          uploaded.map((a) => ({
+            message_id: msgData.id,
+            message_type: "dm",
+            url: a.url,
+            thumbnail_url: a.thumbnailUrl,
+            width: a.width,
+            height: a.height,
+            file_name: a.fileName,
+            size: a.size,
+            mime_type: a.mimeType,
+            kind: a.kind || "file",
+          }))
+        );
+      }
+    },
+    [userId, friendId]
+  );
+
+  return { messages, sendMessage, sendRawMessage, deleteMessage, editMessage, togglePin, uploading, uploadProgress };
 }

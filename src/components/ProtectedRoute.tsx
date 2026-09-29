@@ -1,5 +1,8 @@
 import { Navigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
+import { CallProvider } from "@/lib/call-context";
+
+
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -11,7 +14,7 @@ export default function ProtectedRoute({ children, requiredRole }: ProtectedRout
 
   if (loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-background">
+      <div className="flex min-h-screen items-center justify-center bg-transparent">
         <div className="w-8 h-8 border-2 border-primary/30 border-t-primary rounded-full animate-spin" />
       </div>
     );
@@ -23,7 +26,7 @@ export default function ProtectedRoute({ children, requiredRole }: ProtectedRout
 
   if (requiredRole && profile?.role !== requiredRole) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-background">
+      <div className="flex min-h-screen items-center justify-center bg-transparent">
         <div className="glass rounded-2xl p-8 text-center max-w-md">
           <p className="text-2xl font-bold text-destructive mb-2">403</p>
           <p className="text-foreground font-medium">Acesso negado</p>
@@ -33,5 +36,5 @@ export default function ProtectedRoute({ children, requiredRole }: ProtectedRout
     );
   }
 
-  return <>{children}</>;
+  return <CallProvider>{children}</CallProvider>;
 }

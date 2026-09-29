@@ -1,10 +1,11 @@
 import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { Shield, ArrowLeft, Ban, CheckCircle, VolumeX, Volume2, UserCheck, Flag, MessageSquare, Clock, Search } from "lucide-react";
+import { Shield, ArrowLeft, Ban, CheckCircle, VolumeX, Volume2, UserCheck, Flag, MessageSquare, Clock, Search, ShieldAlert } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { AdminBannedWords } from "@/components/chat/AdminBannedWords";
 
-type Tab = "moderation" | "reports" | "logs";
+type Tab = "moderation" | "reports" | "logs" | "words";
 
 interface Report {
   id: string;
@@ -34,7 +35,7 @@ export default function Admin() {
   const navigate = useNavigate();
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
+    <div className="min-h-screen bg-transparent flex flex-col">
       {/* Header */}
       <header className="h-14 flex items-center gap-3 px-4 border-b border-border glass">
         <button onClick={() => navigate("/")} className="p-2 rounded-lg hover:bg-secondary transition-colors">
@@ -49,6 +50,7 @@ export default function Admin() {
         {([
           { id: "moderation" as Tab, label: "Moderação", icon: Ban },
           { id: "reports" as Tab, label: "Denúncias", icon: Flag },
+          { id: "words" as Tab, label: "Palavras", icon: ShieldAlert },
           { id: "logs" as Tab, label: "Histórico", icon: MessageSquare },
         ]).map(({ id, label, icon: Icon }) => (
           <button
@@ -68,6 +70,7 @@ export default function Admin() {
       <div className="flex-1 overflow-y-auto p-4 max-w-4xl mx-auto w-full">
         {tab === "moderation" && <ModerationTab />}
         {tab === "reports" && <ReportsTab />}
+        {tab === "words" && <AdminBannedWords />}
         {tab === "logs" && <LogsTab />}
       </div>
     </div>
@@ -96,7 +99,7 @@ function ModerationTab() {
       const { data, error: fnError } = await supabase.functions.invoke("moderate-user", { body });
       if (fnError) throw new Error(fnError.message);
       if (data?.error) throw new Error(data.error);
-      setSuccess(data?.message || "Ação executada com sucesso");
+      setSuccess(`${data?.message || "Ação executada com sucesso"}. A sessão do usuário será atualizada imediatamente.`);
       setTarget("");
     } catch (err: any) {
       setError(err.message || "Erro ao executar ação");
