@@ -122,7 +122,7 @@ var get_my_profile_default = defineTool4({
 });
 
 // src/lib/mcp/index.ts
-var projectRef = "gbuicpqefqtcstswwgvb";
+var projectRef = "biqzxskpfcfqobedatks";
 var mcp_default = defineMcp({
   name: "flashchat-mcp",
   title: "FlashChat MCP",
