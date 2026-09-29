@@ -2,11 +2,16 @@ import { X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import type { PendingAttachment } from "@/lib/image-utils";
 import { isVideoFile } from "@/lib/image-utils";
+import { getFileIcon, formatFileSize } from "@/lib/file-icons";
 
 interface AttachmentTrayProps {
   attachments: PendingAttachment[];
   onRemove: (id: string) => void;
   uploadProgress: number | null;
+}
+
+function isMediaFile(file: File): boolean {
+  return file.type.startsWith("image/") || file.type.startsWith("video/");
 }
 
 export function AttachmentTray({ attachments, onRemove, uploadProgress }: AttachmentTrayProps) {
@@ -49,12 +54,17 @@ export function AttachmentTray({ attachments, onRemove, uploadProgress }: Attach
                   muted
                   preload="metadata"
                 />
-              ) : (
+              ) : isMediaFile(att.file) ? (
                 <img
                   src={att.preview}
                   alt={att.file.name}
                   className="w-full h-full object-cover"
                 />
+              ) : (
+                <div className="w-full h-full flex flex-col items-center justify-center bg-muted text-center px-1">
+                  <span className="text-2xl">{getFileIcon(att.file.name, att.file.type).emoji}</span>
+                  <span className="text-[9px] text-muted-foreground mt-0.5">{formatFileSize(att.file.size)}</span>
+                </div>
               )}
               <button
                 onClick={() => onRemove(att.id)}

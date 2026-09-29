@@ -14,7 +14,8 @@ export default {
     },
     extend: {
       fontFamily: {
-        sans: ["Space Grotesk", "system-ui", "sans-serif"],
+        sans: ["Cabin", "system-ui", "sans-serif"],
+        display: ["Orbitron", "Cabin", "system-ui", "sans-serif"],
         mono: ["JetBrains Mono", "monospace"],
       },
       colors: {
@@ -58,6 +59,7 @@ export default {
           "other-foreground": "hsl(var(--chat-other-foreground))",
         },
         online: "hsl(var(--online))",
+        "glass-border": "hsl(var(--glass-border) / 0.22)",
         sidebar: {
           DEFAULT: "hsl(var(--sidebar-background))",
           foreground: "hsl(var(--sidebar-foreground))",

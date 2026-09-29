@@ -7,6 +7,8 @@ export interface AttachmentData {
   height: number;
   fileName: string;
   size: number;
+  mimeType?: string;
+  kind?: "image" | "video" | "audio" | "file";
 }
 
 export interface PendingAttachment {
@@ -239,6 +241,39 @@ async function uploadGifAttachment(
   };
 }
 
+async function uploadGenericFile(
+  file: File,
+  userId: string,
+  onProgress?: (pct: number) => void
+): Promise<AttachmentData> {
+  onProgress?.(5);
+  if (file.size > 50 * 1024 * 1024) {
+    throw new Error("Arquivo muito grande. Máximo: 50MB.");
+  }
+  const ts = Date.now();
+  // sanitize filename
+  const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_").slice(0, 80);
+  const path = `${userId}/${ts}-${safeName}`;
+  const { error } = await supabase.storage
+    .from("attachments")
+    .upload(path, file, { contentType: file.type || "application/octet-stream" });
+  if (error) throw error;
+  onProgress?.(95);
+  const { data: urlData } = supabase.storage.from("attachments").getPublicUrl(path);
+  onProgress?.(100);
+  const kind: AttachmentData["kind"] = file.type.startsWith("audio/") ? "audio" : "file";
+  return {
+    url: urlData.publicUrl,
+    thumbnailUrl: urlData.publicUrl,
+    width: 0,
+    height: 0,
+    fileName: file.name,
+    size: file.size,
+    mimeType: file.type,
+    kind,
+  };
+}
+
 export async function uploadAttachment(
   file: File,
   bucket: string,
@@ -247,10 +282,15 @@ export async function uploadAttachment(
 ): Promise<AttachmentData> {
   // Route to appropriate handler
   if (isVideoFile(file)) {
-    return uploadVideoAttachment(file, bucket, userId, onProgress);
+    const r = await uploadVideoAttachment(file, bucket, userId, onProgress);
+    return { ...r, mimeType: file.type, kind: "video" };
   }
   if (isGifFile(file)) {
-    return uploadGifAttachment(file, bucket, userId, onProgress);
+    const r = await uploadGifAttachment(file, bucket, userId, onProgress);
+    return { ...r, mimeType: "image/gif", kind: "image" };
+  }
+  if (!file.type.startsWith("image/")) {
+    return uploadGenericFile(file, userId, onProgress);
   }
 
   // Standard image compression flow
@@ -292,6 +332,8 @@ export async function uploadAttachment(
     height: dims.height,
     fileName: file.name,
     size: file.size,
+    mimeType: "image/webp",
+    kind: "image",
   };
 }
 
@@ -307,9 +349,17 @@ export function revokePendingAttachments(attachments: PendingAttachment[]) {
   attachments.forEach((a) => URL.revokeObjectURL(a.preview));
 }
 
-/** Accepted file types for the file picker */
+/** Accepted file types for the file picker (mídia) */
 export const ACCEPTED_MEDIA_TYPES = "image/*,video/mp4,video/webm,video/quicktime,.gif";
 
+/** Aceita qualquer arquivo */
+export const ACCEPTED_ANY_TYPES = "*/*";
+
 export function isAcceptedFile(file: File): boolean {
+  // Aceita qualquer arquivo (validação de tamanho ocorre no upload)
+  return file.size > 0;
+}
+
+export function isAcceptedMediaFile(file: File): boolean {
   return file.type.startsWith("image/") || file.type.startsWith("video/");
 }

@@ -23,7 +23,7 @@ const Index = () => {
 
   if (!user || !profile) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-background">
+      <div className="flex min-h-screen items-center justify-center bg-transparent">
         <div className="w-8 h-8 border-2 border-primary/30 border-t-primary rounded-full animate-spin" />
       </div>
     );
@@ -43,7 +43,10 @@ const Index = () => {
       onlineUsers={chat.onlineUsers}
       onRoomChange={chat.setCurrentRoom}
       onSendMessage={chat.sendMessage}
+      onSendRawMessage={chat.sendRawMessage}
       onDeleteMessage={chat.deleteMessage}
+      onEditMessage={chat.editMessage}
+      onTogglePin={chat.togglePin}
       onTyping={chat.sendTyping}
       onLogout={signOut}
       uploading={chat.uploading}

@@ -125,8 +125,9 @@ Deno.serve(async (req) => {
       .eq("id", targetUserId);
 
     if (updateError) {
+      console.error("[moderate-user] update error", updateError);
       return new Response(
-        JSON.stringify({ error: "Erro: " + updateError.message }),
+        JSON.stringify({ error: "Erro interno" }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
@@ -136,8 +137,9 @@ Deno.serve(async (req) => {
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (err) {
+    console.error("[moderate-user] error", err);
     return new Response(
-      JSON.stringify({ error: "Erro interno: " + (err as Error).message }),
+      JSON.stringify({ error: "Erro interno" }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }

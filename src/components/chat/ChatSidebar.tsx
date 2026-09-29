@@ -1,11 +1,18 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Users, X, LogOut, UserPlus, MessageSquare, Trash2, Megaphone, Settings } from "lucide-react";
+import { Users, X, LogOut, UserPlus, MessageSquare, Trash2, Megaphone, Settings, AtSign, Lock, UsersRound, Music2, Wand2 } from "lucide-react";
+import { FlashLogo } from "@/components/FlashLogo";
+import { getRoomIcon } from "@/lib/room-icons";
+
 import type { Room } from "@/lib/chat-store";
 import type { Profile } from "@/hooks/useAuth";
 import type { Friend, FriendRequest } from "@/hooks/useFriends";
 import { FriendRequests } from "./FriendRequests";
 import { ProfileEditModal } from "./ProfileEditModal";
+import { nameFontStyle } from "@/lib/fonts";
+import { XPBadge } from "./XPBadge";
+import type { UserXP } from "@/hooks/useUserXP";
 
 interface ChatSidebarProps {
   currentRoom: string;
@@ -30,6 +37,10 @@ interface ChatSidebarProps {
   onOpenChangelog: () => void;
   hasUnreadChangelog: boolean;
   onOpenSettings: () => void;
+  onOpenMentions: () => void;
+  mentionsUnread: number;
+  onOpenAchievements: () => void;
+  userXp: UserXP | null;
 }
 
 export function ChatSidebar({
@@ -55,6 +66,10 @@ export function ChatSidebar({
   onOpenChangelog,
   hasUnreadChangelog,
   onOpenSettings,
+  onOpenMentions,
+  mentionsUnread,
+  onOpenAchievements,
+  userXp,
 }: ChatSidebarProps) {
   const [profileEditOpen, setProfileEditOpen] = useState(false);
 
@@ -68,7 +83,7 @@ export function ChatSidebar({
         className={`
           fixed md:relative z-50 md:z-auto
           top-0 left-0 h-full w-64
-          bg-sidebar border-r border-sidebar-border
+          glass-panel border-r border-sidebar-border/40
           flex flex-col
           transition-transform duration-300
           ${open ? "translate-x-0" : "-translate-x-full md:translate-x-0"}
@@ -76,13 +91,15 @@ export function ChatSidebar({
       >
         {/* Header */}
         <div className="p-4 border-b border-sidebar-border flex items-center justify-between">
-          <h2 className="font-bold text-foreground text-lg">
-            Flash<span className="text-primary font-sans">Chat BETA  </span>
+          <h2 className="font-display text-lg tracking-wide flex items-center gap-2">
+            <FlashLogo className="w-5 h-5 text-primary flex-shrink-0" />
+            <span className="text-foreground">Flash</span><span className="text-primary">Chat BETA</span>
           </h2>
           <button onClick={onClose} className="md:hidden text-muted-foreground hover:text-foreground">
             <X className="w-5 h-5" />
           </button>
         </div>
+
 
         {/* Scrollable content */}
         <div className="flex-1 overflow-y-auto">
@@ -92,6 +109,7 @@ export function ChatSidebar({
             {rooms.map((room) => {
               const unread = unreadCounts[room.id] || 0;
               const isActive = currentRoom === room.id && !activeDMFriendId;
+              const Icon = getRoomIcon(room.id);
               return (
                 <motion.button
                   key={room.id}
@@ -104,10 +122,10 @@ export function ChatSidebar({
                       : "text-sidebar-foreground hover:bg-sidebar-accent"}
                   `}
                 >
-                  <span className="text-base">{room.emoji}</span>
+                  <Icon className="w-4 h-4 flex-shrink-0" />
                   <span className="flex-1 text-left">{room.name}</span>
                   {room.is_readonly && (
-                    <span className="text-[9px] text-muted-foreground">🔒</span>
+                    <Lock className="w-3 h-3 text-muted-foreground" />
                   )}
                   {unread > 0 && (
                     <span className="flex items-center gap-1.5">
@@ -120,6 +138,33 @@ export function ChatSidebar({
                 </motion.button>
               );
             })}
+            <Link
+              to="/groups"
+              onClick={onClose}
+              className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm font-medium text-sidebar-foreground hover:bg-sidebar-accent transition-all mt-1"
+            >
+              <UsersRound className="w-4 h-4 flex-shrink-0 text-primary" />
+              <span className="flex-1 text-left">Grupos</span>
+              <span className="text-[10px] px-1.5 py-0.5 rounded bg-primary/10 text-primary font-semibold">NOVO</span>
+            </Link>
+            <Link
+              to="/music"
+              onClick={onClose}
+              className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm font-medium text-sidebar-foreground hover:bg-sidebar-accent transition-all"
+            >
+              <Music2 className="w-4 h-4 flex-shrink-0 text-primary" />
+              <span className="flex-1 text-left">Música</span>
+              <span className="text-[10px] px-1.5 py-0.5 rounded bg-primary/10 text-primary font-semibold">NOVO</span>
+            </Link>
+            <Link
+              to="/flashforge"
+              onClick={onClose}
+              className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm font-medium text-sidebar-foreground hover:bg-sidebar-accent transition-all"
+            >
+              <Wand2 className="w-4 h-4 flex-shrink-0 text-primary" />
+              <span className="flex-1 text-left">FlashForge</span>
+              <span className="text-[10px] px-1.5 py-0.5 rounded bg-primary/10 text-primary font-semibold">NOVO</span>
+            </Link>
           </div>
 
           {/* Pending requests */}
@@ -193,17 +238,40 @@ export function ChatSidebar({
               <Users className="w-3.5 h-3.5" />
               Online — {onlineUsers.length}
             </p>
-            <div className="space-y-1 max-h-32 overflow-y-auto">
-              {onlineUsers.map((user) => (
-                <div key={user} className="flex items-center gap-2 px-2 py-1.5 text-sm text-sidebar-foreground">
-                  <div className="w-2 h-2 rounded-full bg-online" />
-                  <span className={user === username ? "font-semibold text-primary" : ""}>
-                    {user}{user === username ? " (você)" : ""}
-                  </span>
-                </div>
-              ))}
+            <div className="space-y-1 max-h-40 overflow-y-auto">
+              {onlineUsers.map((user) => {
+                const isYou = user === username;
+                const initial = user[0]?.toUpperCase() || "?";
+                return (
+                  <Link
+                    key={user}
+                    to={`/u/${encodeURIComponent(user)}`}
+                    onClick={onClose}
+                    className="group relative flex items-center gap-2.5 px-2 py-1.5 rounded-lg text-sm overflow-hidden hover:bg-sidebar-accent transition-colors"
+                  >
+                    {/* Watermark inicial atrás */}
+                    <span
+                      aria-hidden
+                      className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-3xl font-display font-black text-primary/10 select-none leading-none"
+                    >
+                      {initial}
+                    </span>
+                    <span className="relative w-2 h-2 rounded-full bg-online shadow-[0_0_8px_hsl(var(--online))]" />
+                    <span className={`relative truncate ${isYou ? "font-semibold text-primary" : "text-sidebar-foreground group-hover:text-foreground"}`}>
+                      {user}{isYou ? " (você)" : ""}
+                    </span>
+                  </Link>
+                );
+              })}
             </div>
           </div>
+
+          </div>
+
+
+        {/* XP / Level */}
+        <div className="px-3 pt-3">
+          <XPBadge xp={userXp} onClick={onOpenAchievements} />
         </div>
 
         {/* Bottom actions */}
@@ -221,10 +289,22 @@ export function ChatSidebar({
               )}
             </button>
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-foreground truncate">{username}</p>
+              <p className="text-sm font-medium text-foreground truncate" style={nameFontStyle(profile?.name_font)}>{username}</p>
               <p className="text-xs text-muted-foreground font-mono">{profile?.friend_code || "-----"}</p>
             </div>
             <div className="flex items-center gap-0.5">
+              <button
+                onClick={onOpenMentions}
+                className="relative p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+                title="Menções"
+              >
+                <AtSign className="w-4 h-4" />
+                {mentionsUnread > 0 && (
+                  <span className="absolute -top-0.5 -right-0.5 min-w-[16px] h-4 px-1 rounded-full bg-primary text-primary-foreground text-[9px] font-bold flex items-center justify-center">
+                    {mentionsUnread > 9 ? "9+" : mentionsUnread}
+                  </span>
+                )}
+              </button>
               <button
                 onClick={onOpenChangelog}
                 className="relative p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
