@@ -1,33 +1,18 @@
+# Restaurar o FlashChat a partir do repositório do GitHub
 
-## Plano: Autenticação com Supabase Auth Nativo
+O repositório `Davidweverson/flash-chat-amigos` é bem mais novo que este remix (chamadas, conquistas, menções, palavras proibidas, logo, partículas, etc.) e traz 42 alterações de banco.
 
-### ⚠️ Aviso Importante
-O sistema atual usa autenticação customizada (localStorage + perfis sem vínculo ao Supabase Auth). **Usuários existentes não poderão fazer login após a migração** — precisarão se registrar novamente.
+## O que será feito
+1. Substituir o código do app por completo pelo do repositório (mantendo só a conexão com o backend deste remix).
+2. Aplicar no backend novo, em ordem, todas as 42 alterações de banco do repositório (tabelas, permissões, funções, armazenamento de arquivos).
+3. Publicar as funções de servidor do repositório.
+4. Pedir, de forma segura, qualquer chave de serviço externo que o código exigir.
+5. Testar criação de conta, envio de mensagem e recarregamento da página (o loading infinito atual).
+6. Te promover a admin depois que você criar sua conta.
 
-### 1. Migração do Banco de Dados
-- Adicionar coluna `role` (text, default 'user') e `banned` (boolean, default false) na tabela `profiles`
-- Recriar trigger `handle_new_user` para criar perfil automaticamente no signup
-- Atualizar RLS policies da tabela `profiles`
+## Limitação
+O repositório guarda o código, não os dados: contas e mensagens antigas não voltam. Todos criam conta de novo.
 
-### 2. Páginas de Autenticação
-- `/register` — formulário com username, email, senha, confirmar senha
-- `/login` — formulário com email e senha
-- Validações client-side (username 3-20 chars alfanuméricos, email válido, senha min 8 chars)
-
-### 3. Proteção de Rotas
-- Componente `ProtectedRoute` que verifica sessão via `supabase.auth.getUser()`
-- Componente `AdminRoute` que verifica role = 'admin'
-- Hook `useAuth` reescrito para usar Supabase Auth real
-
-### 4. Página Admin (`/admin`)
-- Protegida para role = 'admin' apenas
-- Formulário para banir usuários por email/username
-- Edge Function `ban-user` que valida role server-side antes de executar
-
-### 5. Dashboard (`/dashboard`)
-- Mostra username, email e role do usuário logado
-- Botão de logout
-
-### 6. Integração com Chat Existente
-- Atualizar `Index.tsx` para usar o novo sistema de auth
-- Manter compatibilidade com o chat existente
+## Detalhes técnicos
+- Copiar `src/`, `public/`, `index.html`, `package.json`, configs e `supabase/functions` do clone; não copiar `.git`, `.env`, `supabase/config.toml`, nem `src/integrations/supabase/client.ts`.
+- Migrations aplicadas byte a byte; tipos regenerados depois.
