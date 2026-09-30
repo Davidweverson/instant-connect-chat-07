@@ -26,13 +26,12 @@ export function useAuth() {
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
+  const [profileMissing, setProfileMissing] = useState(false);
   const profileRef = useRef<Profile | null>(null);
 
   useEffect(() => {
     profileRef.current = profile;
   }, [profile]);
-
-  const [profileMissing, setProfileMissing] = useState(false);
 
   const fetchProfile = useCallback(async (userId: string) => {
     let { data, error } = await supabase
