@@ -8,6 +8,13 @@
       "when": 1790725487765,
       "tag": "0000_restore_flashchat_from_github",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1790732567813,
+      "tag": "0001_restore_realtime_tables",
+      "breakpoints": true
     }
   ]
 }
