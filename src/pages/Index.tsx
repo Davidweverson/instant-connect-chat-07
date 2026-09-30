@@ -5,7 +5,20 @@ import { useFriends } from "@/hooks/useFriends";
 
 const Index = () => {
   const { user, profile, profileMissing, isAdmin, signOut, refetchProfile } = useAuth();
-...
+
+  const chat = useChatStore(
+    user?.id || "",
+    profile?.username || ""
+  );
+
+  const {
+    friends,
+    pendingRequests,
+    loading: friendLoading,
+    addFriendByCode,
+    acceptRequest,
+    rejectRequest,
+    removeFriend,
   } = useFriends(user?.id || "");
 
   if (user && !profile && profileMissing) {
