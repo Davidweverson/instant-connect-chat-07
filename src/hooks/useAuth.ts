@@ -32,12 +32,21 @@ export function useAuth() {
     profileRef.current = profile;
   }, [profile]);
 
+  const [profileMissing, setProfileMissing] = useState(false);
+
   const fetchProfile = useCallback(async (userId: string) => {
-    const { data } = await supabase
+    let { data, error } = await supabase
       .from("profiles")
       .select("*")
       .eq("id", userId)
-      .single();
+      .maybeSingle();
+    if (!data && !error) {
+      // Perfil pode estar sendo criado pelo trigger — tenta de novo uma vez
+      await new Promise((r) => setTimeout(r, 1200));
+      ({ data, error } = await supabase.from("profiles").select("*").eq("id", userId).maybeSingle());
+    }
+    setProfileMissing(!data);
+    if (error) console.error("[useAuth] erro ao carregar perfil:", error);
     if (data) {
       const d = data as any;
       setProfile({
@@ -205,6 +214,7 @@ export function useAuth() {
   return {
     user,
     profile,
+    profileMissing,
     isAdmin,
     loading,
     signUp,
