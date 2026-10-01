@@ -14,6 +14,32 @@ import type { EditorSource } from "./WallpaperEditor";
 
 const WallpaperEditor = lazy(() => import("./WallpaperEditor"));
 
+/** Informs (never blocks) when a wallpaper video looks heavy: above 1080p, high bitrate or very large file. */
+function warnIfHeavyVideo(file: File) {
+  const url = URL.createObjectURL(file);
+  const v = document.createElement("video");
+  v.preload = "metadata";
+  v.muted = true;
+  const done = () => URL.revokeObjectURL(url);
+  v.onloadedmetadata = () => {
+    const pixels = v.videoWidth * v.videoHeight;
+    const duration = isFinite(v.duration) && v.duration > 0 ? v.duration : 0;
+    const mbps = duration ? (file.size * 8) / duration / 1_000_000 : 0;
+    const heavy = pixels > 1920 * 1080 || mbps > 12 || file.size > 25 * 1024 * 1024;
+    if (heavy) {
+      const res = v.videoWidth && v.videoHeight ? ` (${v.videoWidth}×${v.videoHeight})` : "";
+      toast.warning(`Este vídeo é pesado${res}`, {
+        description:
+          "Vídeos de wallpaper em qualidade muito alta podem deixar o site lento. O impacto depende do seu dispositivo e navegador. Para uma experiência mais fluida, prefira um vídeo com resolução mais moderada (até 1080p).",
+        duration: 9000,
+      });
+    }
+    done();
+  };
+  v.onerror = done;
+  v.src = url;
+}
+
 export default function WallpaperSection({ userId }: { userId?: string }) {
   const [items, setItems] = useState<UserWallpaper[]>([]);
   const [previews, setPreviews] = useState<Record<string, string>>({});
@@ -50,6 +76,7 @@ export default function WallpaperSection({ userId }: { userId?: string }) {
       toast.error("Formato não suportado. Use JPG, PNG, WEBP, GIF, MP4 ou WEBM.");
       return;
     }
+    if (file.type.startsWith("video/")) warnIfHeavyVideo(file);
     setEditor({ kind: "new", file });
   };
 
