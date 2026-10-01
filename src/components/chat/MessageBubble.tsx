@@ -122,7 +122,7 @@ export function MessageBubble({
         </div>
       )}
 
-      <div className={`max-w-[75%] md:max-w-[60%] ${isOwn ? "items-end" : "items-start"} flex flex-col min-w-0`}>
+      <div className={`ff-bubble-col ${isOwn ? "items-end" : "items-start"} flex flex-col min-w-0`}>
         {!isOwn && (
           <Link to={`/u/${message.sender}`} style={nameFont} className="text-xs font-medium text-primary ml-1 mb-0.5 hover:underline">{message.sender}</Link>
         )}
