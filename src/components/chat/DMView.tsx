@@ -87,7 +87,7 @@ function DMBubble({ msg, isOwn, viewerId, onImageClick, onDelete, onReply, onEdi
       className={`flex ${isOwn ? "justify-end" : "justify-start"} mb-1 group`}
       data-message-id={msg.id}
     >
-      <div className={`max-w-[75%] md:max-w-[60%] flex flex-col ${isOwn ? "items-end" : "items-start"}`}>
+      <div className={`ff-bubble-col flex flex-col ${isOwn ? "items-end" : "items-start"}`}>
         {msg.isPinned && (
           <span className="text-[10px] flex items-center gap-1 text-amber-500 mb-0.5"><Pin className="w-3 h-3" /> Fixada</span>
         )}

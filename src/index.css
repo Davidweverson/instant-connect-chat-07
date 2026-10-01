@@ -382,7 +382,8 @@
     border-radius: var(--ff-bubble-radius, 18px);
     padding: var(--ff-bubble-padding, 10px) calc(var(--ff-bubble-padding, 10px) + 2px);
     min-height: var(--ff-bubble-min-height, 0px);
-    max-width: var(--ff-bubble-max-width, 75%);
+    /* Largura máxima aplicada na coluna da mensagem (.ff-bubble-col); aqui o balão só preenche essa coluna. */
+    max-width: 100%;
     opacity: calc(var(--ff-bubble-opacity, 100%) / 100%);
     margin-inline: var(--ff-bubble-margin, 0px);
     box-shadow: 0 4px var(--ff-bubble-shadow, 8px) calc(var(--ff-bubble-shadow, 8px) / -2)
