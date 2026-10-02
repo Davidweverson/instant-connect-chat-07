@@ -197,7 +197,7 @@ export function ChatLayout({
   };
 
   return (
-    <div className="flex h-screen w-full bg-transparent">
+    <div className="flex h-[100dvh] w-full max-w-full overflow-hidden bg-transparent">
       <OfflineBanner />
       <ChatSidebar
         currentRoom={currentRoom}
@@ -232,7 +232,7 @@ export function ChatLayout({
         <DMView userId={userId} username={username} friend={activeDMFriend} onBack={handleBackToRoom} />
       ) : (
         <div className="flex-1 flex flex-col min-w-0">
-          <header className="h-14 flex items-center gap-3 px-4 border-b border-border glass">
+          <header className="h-14 flex items-center gap-2 sm:gap-3 px-2 sm:px-4 border-b border-border glass">
             <button
               onClick={() => setSidebarOpen(true)}
               className="md:hidden text-muted-foreground hover:text-foreground p-1"
@@ -240,9 +240,9 @@ export function ChatLayout({
               <Menu className="w-5 h-5" />
             </button>
             {(() => { const RIcon = getRoomIcon(room?.id || ""); return <RIcon className="w-5 h-5 text-primary" />; })()}
-            <div className="flex-1">
-              <div className="flex items-center gap-2">
-                <h2 className="font-semibold text-foreground text-sm">{room?.name}</h2>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2 min-w-0">
+                <h2 className="font-semibold text-foreground text-sm truncate">{room?.name}</h2>
                 {room?.is_readonly && (
                   <Lock className="w-3.5 h-3.5 text-muted-foreground" />
                 )}

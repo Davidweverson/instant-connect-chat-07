@@ -46,11 +46,13 @@ const options = {
 
 export function ParticlesBackground() {
   const [reduce, setReduce] = useState(() =>
-    typeof window !== "undefined" && window.matchMedia?.("(prefers-reduced-motion: reduce)").matches
+    typeof window !== "undefined" && (window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ||
+      window.matchMedia?.("(max-width: 767px), (pointer: coarse)").matches)
   );
   useEffect(() => {
     const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
-    const handler = () => setReduce(mq.matches);
+    const small = window.matchMedia("(max-width: 767px), (pointer: coarse)");
+    const handler = () => setReduce(mq.matches || small.matches);
     mq.addEventListener?.("change", handler);
     return () => mq.removeEventListener?.("change", handler);
   }, []);
@@ -68,7 +70,7 @@ export function ParticlesRoot({ children }: { children: ReactNode }) {
   return (
     <ParticlesProvider init={init}>
       <ParticlesBackground />
-      <div className="relative z-10 min-h-screen">{children}</div>
+      <div className="relative z-10 min-h-[100dvh]">{children}</div>
     </ParticlesProvider>
   );
 }

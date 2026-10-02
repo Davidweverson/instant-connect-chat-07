@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useCallback, useMemo, type ReactNode } from "react";
 import { motion } from "framer-motion";
-import { ArrowLeft, Send, Smile, Plus, Image as ImageIcon, Trash2, Reply, X, Copy, Check, Pencil, Pin, PinOff, Search, BarChart3, Phone, Video } from "lucide-react";
+import { MoreHorizontal, ArrowLeft, Send, Smile, Plus, Image as ImageIcon, Trash2, Reply, X, Copy, Check, Pencil, Pin, PinOff, Search, BarChart3, Phone, Video } from "lucide-react";
 import { useCall } from "@/lib/call-context";
 
 import { useDirectMessages, type DirectMessage } from "@/hooks/useDirectMessages";
@@ -84,7 +84,8 @@ function DMBubble({ msg, isOwn, viewerId, onImageClick, onDelete, onReply, onEdi
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.2 }}
-      className={`flex ${isOwn ? "justify-end" : "justify-start"} mb-1 group`}
+      tabIndex={-1}
+      className={`msg-row flex ${isOwn ? "justify-end" : "justify-start"} mb-1 group outline-none`}
       data-message-id={msg.id}
     >
       <div className={`ff-bubble-col flex flex-col ${isOwn ? "items-end" : "items-start"}`}>
@@ -174,7 +175,7 @@ function DMBubble({ msg, isOwn, viewerId, onImageClick, onDelete, onReply, onEdi
           </div>
 
           {!editing && (
-            <div className={`absolute ${isOwn ? "-left-44" : "-right-44"} top-1/2 -translate-y-1/2 flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-all`}>
+            <div className={`absolute msg-actions z-10 ${isOwn ? "-left-44 max-sm:left-auto max-sm:right-0" : "-right-44 max-sm:right-auto max-sm:left-0"} top-1/2 -translate-y-1/2 max-sm:-top-9 max-sm:translate-y-0 max-sm:bg-popover max-sm:border max-sm:border-border max-sm:rounded-lg max-sm:px-1 max-sm:py-0.5 flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-all`}>
               {onReact && <ReactionPicker onPick={(e) => onReact(msg.id, e)} />}
               {msg.text && !isGiphyUrl(msg.text) && (
                 <button onClick={handleCopy} className="p-1 rounded text-muted-foreground hover:text-foreground hover:bg-muted transition-all" title="Copiar">
@@ -221,6 +222,7 @@ export function DMView({ userId, username, friend, onBack }: DMViewProps) {
   const [text, setText] = useState("");
   const [showEmojis, setShowEmojis] = useState(false);
   const [showGifs, setShowGifs] = useState(false);
+  const [showTools, setShowTools] = useState(false);
   const [attachments, setAttachments] = useState<PendingAttachment[]>([]);
   const [lightboxSrc, setLightboxSrc] = useState<string | null>(null);
   const [dragOver, setDragOver] = useState(false);
@@ -364,7 +366,7 @@ export function DMView({ userId, username, friend, onBack }: DMViewProps) {
       onDragLeave={(e) => { e.preventDefault(); setDragOver(false); }}
       onDrop={handleDrop}
     >
-      <header className="h-14 flex items-center gap-3 px-4 border-b border-border glass">
+      <header className="h-14 flex items-center gap-2 sm:gap-3 px-2 sm:px-4 border-b border-border glass">
         <button onClick={onBack} className="text-muted-foreground hover:text-foreground p-1">
           <ArrowLeft className="w-5 h-5" />
         </button>
@@ -375,7 +377,7 @@ export function DMView({ userId, username, friend, onBack }: DMViewProps) {
             <span className="text-xs font-bold text-primary">{friend.username[0]?.toUpperCase()}</span>
           )}
         </div>
-        <h2 className="font-semibold text-foreground text-sm flex-1">{friend.username}</h2>
+        <h2 className="font-semibold text-foreground text-sm flex-1 min-w-0 truncate">{friend.username}</h2>
         <button
           onClick={() => dmCall.startCall(friend.id, friend.username, friend.avatar_url || null, "voice")}
           className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
@@ -481,18 +483,27 @@ export function DMView({ userId, username, friend, onBack }: DMViewProps) {
           </div>
         )}
 
-        <form onSubmit={handleSend} className="p-3 border-t border-border relative">
+        <form onSubmit={handleSend} className="p-2 sm:p-3 border-t border-border relative pb-[max(0.5rem,env(safe-area-inset-bottom))]">
           <MentionAutocomplete
             visible={mentionState.active}
             query={mentionState.query}
             onSelect={handleMentionSelect}
             onClose={() => setMentionState({ active: false, query: "", start: 0 })}
           />
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1 sm:gap-2">
             <button type="button" onClick={() => fileInputRef.current?.click()} className="p-2.5 rounded-xl text-muted-foreground hover:text-foreground hover:bg-muted transition-colors">
               <Plus className="w-5 h-5" />
             </button>
             <input ref={fileInputRef} type="file" accept={ACCEPTED_ANY_TYPES} multiple className="hidden" onChange={handleFileChange} />
+<button
+            type="button"
+            onClick={() => setShowTools((v) => !v)}
+            className={`sm:hidden p-2.5 rounded-xl transition-colors ${showTools ? "bg-primary/10 text-primary" : "text-muted-foreground"}`}
+            aria-label="Mais opções"
+          >
+            <MoreHorizontal className="w-5 h-5" />
+          </button>
+          <div className={`${showTools ? "flex" : "hidden"} sm:contents max-sm:absolute max-sm:bottom-full max-sm:left-2 max-sm:mb-2 max-sm:z-20 max-sm:gap-1 max-sm:p-1 max-sm:rounded-xl max-sm:bg-popover max-sm:border max-sm:border-border max-sm:shadow-lg items-center`}>
             <button type="button" onClick={() => { setShowGifs(!showGifs); setShowEmojis(false); }} className={`p-2.5 rounded-xl transition-colors ${showGifs ? "bg-primary/10 text-primary" : "text-muted-foreground hover:text-foreground hover:bg-muted"}`} title="GIFs">
               <ImageIcon className="w-5 h-5" />
             </button>
@@ -512,6 +523,7 @@ export function DMView({ userId, username, friend, onBack }: DMViewProps) {
             >
               <BarChart3 className="w-5 h-5" />
             </button>
+          </div>
             <input
               ref={inputRef}
               type="text"
@@ -519,7 +531,8 @@ export function DMView({ userId, username, friend, onBack }: DMViewProps) {
               onChange={handleTextChange}
               onPaste={handlePaste}
               placeholder="Digite sua mensagem..."
-              className="flex-1 px-4 py-2.5 rounded-xl bg-secondary border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 text-sm transition-all"
+              className="flex-1 min-w-0 px-3 sm:px-4 py-2.5 rounded-xl bg-secondary border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 text-base sm:text-sm transition-all"
+              enterKeyHint="send"
             />
             <motion.button whileTap={{ scale: 0.9 }} type="submit" disabled={(!text.trim() && attachments.length === 0) || uploading} className="p-2.5 rounded-xl bg-primary text-primary-foreground disabled:opacity-30 disabled:cursor-not-allowed transition-all hover:brightness-110">
               <Send className="w-5 h-5" />
