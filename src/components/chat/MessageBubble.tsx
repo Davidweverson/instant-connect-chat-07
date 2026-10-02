@@ -109,7 +109,8 @@ export function MessageBubble({
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.2 }}
-      className={`flex ${isOwn ? "justify-end" : "justify-start"} mb-1 group`}
+      tabIndex={-1}
+      className={`msg-row flex ${isOwn ? "justify-end" : "justify-start"} mb-1 group outline-none`}
       data-message-id={message.id}
     >
       {!isOwn && showAvatar && (
@@ -254,7 +255,7 @@ export function MessageBubble({
 
           {/* Action buttons */}
           {!isEditing && (
-            <div className={`absolute -top-9 ${isOwn ? "right-0" : "left-0"} z-10 flex items-center gap-0.5 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-all bg-popover/95 backdrop-blur border border-border rounded-lg shadow-lg px-1 py-0.5`}>
+            <div className={`absolute -top-9 ${isOwn ? "right-0" : "left-0"} z-10 msg-actions flex items-center gap-0.5 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-all bg-popover/95 backdrop-blur border border-border rounded-lg shadow-lg px-1 py-0.5`}>
               {onReact && (
                 <ReactionPicker onPick={(e) => onReact(message.id, e)} />
               )}

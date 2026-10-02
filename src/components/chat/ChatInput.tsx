@@ -225,14 +225,14 @@ export function ChatInput({ onSend, onSendRaw, onTyping, uploading, uploadProgre
         </div>
       )}
 
-      <form onSubmit={handleSubmit} className="p-3 border-t border-border relative">
+      <form onSubmit={handleSubmit} className="p-2 sm:p-3 border-t border-border relative pb-[max(0.5rem,env(safe-area-inset-bottom))]">
         <MentionAutocomplete
           visible={mentionState.active}
           query={mentionState.query}
           onSelect={handleMentionSelect}
           onClose={() => setMentionState({ active: false, query: "", start: 0 })}
         />
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1 sm:gap-2">
           <button
             type="button"
             onClick={() => fileInputRef.current?.click()}
@@ -292,7 +292,8 @@ export function ChatInput({ onSend, onSendRaw, onTyping, uploading, uploadProgre
               }
             }}
             placeholder="Digite sua mensagem..."
-            className="flex-1 px-4 py-2.5 rounded-xl bg-secondary border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 text-sm transition-all"
+            className="flex-1 min-w-0 px-3 sm:px-4 py-2.5 rounded-xl bg-secondary border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 text-base sm:text-sm transition-all"
+              enterKeyHint="send"
           />
           <motion.button
             whileTap={{ scale: 0.9 }}
