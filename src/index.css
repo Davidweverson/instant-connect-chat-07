@@ -156,12 +156,19 @@
 @layer base {
   * {
     @apply border-border;
-    transition: background-color 0.25s ease, color 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease, transform 0.25s ease;
   }
 
   html, body, #root {
     min-height: 100vh;
+    min-height: 100dvh;
   }
+  html, body {
+    max-width: 100%;
+    overflow-x: hidden;
+    -webkit-text-size-adjust: 100%;
+  }
+  button, a, [role="button"] { -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
+  img, video { max-width: 100%; }
 
   #root {
     isolation: isolate;
@@ -434,7 +441,7 @@ html[style*="--ff-icon"] svg { color: hsl(var(--ff-icon)); }
   animation-duration: 0.01ms !important;
   transition-duration: 0.01ms !important;
 }
-html:not(.ff-no-anim) * {
+html:not(.ff-no-anim) :where(button, a, input, textarea, [class*="transition"]) {
   transition-duration: calc(var(--ff-anim-duration, 250ms) * var(--ff-anim-scale, 1));
   transition-timing-function: var(--ff-anim-easing, cubic-bezier(0.2, 0.7, 0.2, 1));
 }
@@ -449,3 +456,18 @@ html[data-ff-density="desktop"] { --ff-density-gap: 8px; font-size: 16px; }
 .ff-hide-list-separators [class*="border-t"],
 .ff-hide-list-separators [class*="divide-y"] > * { border-color: transparent !important; }
 .ff-hide-list-avatars .ff-list-avatar { display: none !important; }
+
+/* ===================== MOBILE ===================== */
+@media (hover: none) {
+  .msg-row:focus .msg-actions,
+  .msg-row:focus-within .msg-actions { opacity: 1; }
+}
+@media (max-width: 767px) {
+  /* Blur é caro em GPUs de celular: mantém o vidro, com desfoque bem menor */
+  :root, .dark, .light { --glass-blur: 8px; }
+  .glass, .glass-panel, .glass-strong { box-shadow: none; }
+  .glass:hover, .glass-hover:hover { transform: none; }
+  body { background-attachment: scroll; }
+  #root::before { display: none; }
+  [role="dialog"] { max-width: calc(100vw - 1rem); max-height: calc(100dvh - 1rem); overflow-y: auto; }
+}
