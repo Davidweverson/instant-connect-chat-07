@@ -223,7 +223,6 @@ export function DMView({ userId, username, friend, onBack }: DMViewProps) {
   const [showEmojis, setShowEmojis] = useState(false);
   const [showGifs, setShowGifs] = useState(false);
   const [showTools, setShowTools] = useState(false);
-  const [showTools, setShowTools] = useState(false);
   const [attachments, setAttachments] = useState<PendingAttachment[]>([]);
   const [lightboxSrc, setLightboxSrc] = useState<string | null>(null);
   const [dragOver, setDragOver] = useState(false);

@@ -30,7 +30,6 @@ export function ChatInput({ onSend, onSendRaw, onTyping, uploading, uploadProgre
   const [showEmojis, setShowEmojis] = useState(false);
   const [showGifs, setShowGifs] = useState(false);
   const [showTools, setShowTools] = useState(false);
-  const [showTools, setShowTools] = useState(false);
   const [attachments, setAttachments] = useState<PendingAttachment[]>([]);
   const [dragOver, setDragOver] = useState(false);
   const [mentionState, setMentionState] = useState<{ active: boolean; query: string; start: number }>({ active: false, query: "", start: 0 });
