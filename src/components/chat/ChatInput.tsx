@@ -1,6 +1,6 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Send, Smile, Plus, Image as ImageIcon, X, BarChart3 } from "lucide-react";
+import { MoreHorizontal, Send, Smile, Plus, Image as ImageIcon, X, BarChart3 } from "lucide-react";
 import { AttachmentTray } from "./AttachmentTray";
 import { GifPicker } from "./GifPicker";
 import { MentionAutocomplete } from "./MentionAutocomplete";
@@ -29,6 +29,7 @@ export function ChatInput({ onSend, onSendRaw, onTyping, uploading, uploadProgre
   const [text, setText] = useState("");
   const [showEmojis, setShowEmojis] = useState(false);
   const [showGifs, setShowGifs] = useState(false);
+  const [showTools, setShowTools] = useState(false);
   const [attachments, setAttachments] = useState<PendingAttachment[]>([]);
   const [dragOver, setDragOver] = useState(false);
   const [mentionState, setMentionState] = useState<{ active: boolean; query: string; start: number }>({ active: false, query: "", start: 0 });
@@ -248,6 +249,15 @@ export function ChatInput({ onSend, onSendRaw, onTyping, uploading, uploadProgre
             className="hidden"
             onChange={handleFileChange}
           />
+<button
+            type="button"
+            onClick={() => setShowTools((v) => !v)}
+            className={`sm:hidden p-2.5 rounded-xl transition-colors ${showTools ? "bg-primary/10 text-primary" : "text-muted-foreground"}`}
+            aria-label="Mais opções"
+          >
+            <MoreHorizontal className="w-5 h-5" />
+          </button>
+          <div className={`${showTools ? "flex" : "hidden"} sm:contents max-sm:absolute max-sm:bottom-full max-sm:left-2 max-sm:mb-2 max-sm:z-20 max-sm:gap-1 max-sm:p-1 max-sm:rounded-xl max-sm:bg-popover max-sm:border max-sm:border-border max-sm:shadow-lg items-center`}>
           <button
             type="button"
             onClick={() => { setShowGifs(!showGifs); setShowEmojis(false); }}
@@ -280,6 +290,7 @@ export function ChatInput({ onSend, onSendRaw, onTyping, uploading, uploadProgre
               </button>
             </>
           )}
+          </div>
           <input
             ref={inputRef}
             type="text"

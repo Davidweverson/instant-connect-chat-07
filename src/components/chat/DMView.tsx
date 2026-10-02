@@ -222,6 +222,7 @@ export function DMView({ userId, username, friend, onBack }: DMViewProps) {
   const [text, setText] = useState("");
   const [showEmojis, setShowEmojis] = useState(false);
   const [showGifs, setShowGifs] = useState(false);
+  const [showTools, setShowTools] = useState(false);
   const [attachments, setAttachments] = useState<PendingAttachment[]>([]);
   const [lightboxSrc, setLightboxSrc] = useState<string | null>(null);
   const [dragOver, setDragOver] = useState(false);
@@ -494,6 +495,15 @@ export function DMView({ userId, username, friend, onBack }: DMViewProps) {
               <Plus className="w-5 h-5" />
             </button>
             <input ref={fileInputRef} type="file" accept={ACCEPTED_ANY_TYPES} multiple className="hidden" onChange={handleFileChange} />
+<button
+            type="button"
+            onClick={() => setShowTools((v) => !v)}
+            className={`sm:hidden p-2.5 rounded-xl transition-colors ${showTools ? "bg-primary/10 text-primary" : "text-muted-foreground"}`}
+            aria-label="Mais opções"
+          >
+            <MoreHorizontal className="w-5 h-5" />
+          </button>
+          <div className={`${showTools ? "flex" : "hidden"} sm:contents max-sm:absolute max-sm:bottom-full max-sm:left-2 max-sm:mb-2 max-sm:z-20 max-sm:gap-1 max-sm:p-1 max-sm:rounded-xl max-sm:bg-popover max-sm:border max-sm:border-border max-sm:shadow-lg items-center`}>
             <button type="button" onClick={() => { setShowGifs(!showGifs); setShowEmojis(false); }} className={`p-2.5 rounded-xl transition-colors ${showGifs ? "bg-primary/10 text-primary" : "text-muted-foreground hover:text-foreground hover:bg-muted"}`} title="GIFs">
               <ImageIcon className="w-5 h-5" />
             </button>
@@ -513,6 +523,7 @@ export function DMView({ userId, username, friend, onBack }: DMViewProps) {
             >
               <BarChart3 className="w-5 h-5" />
             </button>
+          </div>
             <input
               ref={inputRef}
               type="text"
