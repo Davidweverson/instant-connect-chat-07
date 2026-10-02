@@ -40,7 +40,7 @@ export default function Groups() {
 
   if (activeGroupId) {
     return (
-      <div className="flex h-screen w-full bg-transparent">
+      <div className="flex h-[100dvh] w-full max-w-full overflow-hidden bg-transparent">
         <GroupView groupId={activeGroupId} userId={user.id} username={profile.username} onBack={() => setActiveGroupId(null)} />
       </div>
     );

@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useCallback, useMemo, type ReactNode } from "react";
 import { motion } from "framer-motion";
-import { ArrowLeft, Send, Smile, Plus, Image as ImageIcon, Trash2, Reply, X, Copy, Check, Pencil, Pin, PinOff, Search, BarChart3, Phone, Video } from "lucide-react";
+import { MoreHorizontal, ArrowLeft, Send, Smile, Plus, Image as ImageIcon, Trash2, Reply, X, Copy, Check, Pencil, Pin, PinOff, Search, BarChart3, Phone, Video } from "lucide-react";
 import { useCall } from "@/lib/call-context";
 
 import { useDirectMessages, type DirectMessage } from "@/hooks/useDirectMessages";
@@ -222,6 +222,7 @@ export function DMView({ userId, username, friend, onBack }: DMViewProps) {
   const [text, setText] = useState("");
   const [showEmojis, setShowEmojis] = useState(false);
   const [showGifs, setShowGifs] = useState(false);
+  const [showTools, setShowTools] = useState(false);
   const [showTools, setShowTools] = useState(false);
   const [attachments, setAttachments] = useState<PendingAttachment[]>([]);
   const [lightboxSrc, setLightboxSrc] = useState<string | null>(null);

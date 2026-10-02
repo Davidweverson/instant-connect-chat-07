@@ -197,7 +197,7 @@ export function ChatLayout({
   };
 
   return (
-    <div className="flex h-screen w-full bg-transparent">
+    <div className="flex h-[100dvh] w-full max-w-full overflow-hidden bg-transparent">
       <OfflineBanner />
       <ChatSidebar
         currentRoom={currentRoom}
