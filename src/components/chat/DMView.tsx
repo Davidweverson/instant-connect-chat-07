@@ -366,7 +366,7 @@ export function DMView({ userId, username, friend, onBack }: DMViewProps) {
       onDragLeave={(e) => { e.preventDefault(); setDragOver(false); }}
       onDrop={handleDrop}
     >
-      <header className="h-14 flex items-center gap-3 px-4 border-b border-border glass">
+      <header className="h-14 flex items-center gap-2 sm:gap-3 px-2 sm:px-4 border-b border-border glass">
         <button onClick={onBack} className="text-muted-foreground hover:text-foreground p-1">
           <ArrowLeft className="w-5 h-5" />
         </button>
@@ -377,7 +377,7 @@ export function DMView({ userId, username, friend, onBack }: DMViewProps) {
             <span className="text-xs font-bold text-primary">{friend.username[0]?.toUpperCase()}</span>
           )}
         </div>
-        <h2 className="font-semibold text-foreground text-sm flex-1">{friend.username}</h2>
+        <h2 className="font-semibold text-foreground text-sm flex-1 min-w-0 truncate">{friend.username}</h2>
         <button
           onClick={() => dmCall.startCall(friend.id, friend.username, friend.avatar_url || null, "voice")}
           className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
