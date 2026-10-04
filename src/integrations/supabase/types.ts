@@ -92,6 +92,45 @@ export type Database = {
         }
         Relationships: []
       }
+      changelog_entries: {
+        Row: {
+          changes: Json
+          created_at: string
+          description: string
+          id: string
+          image_url: string | null
+          is_published: boolean
+          published_at: string | null
+          title: string
+          updated_at: string
+          version: string
+        }
+        Insert: {
+          changes?: Json
+          created_at?: string
+          description?: string
+          id?: string
+          image_url?: string | null
+          is_published?: boolean
+          published_at?: string | null
+          title?: string
+          updated_at?: string
+          version: string
+        }
+        Update: {
+          changes?: Json
+          created_at?: string
+          description?: string
+          id?: string
+          image_url?: string | null
+          is_published?: boolean
+          published_at?: string | null
+          title?: string
+          updated_at?: string
+          version?: string
+        }
+        Relationships: []
+      }
       chat_messages: {
         Row: {
           created_at: string
@@ -769,6 +808,74 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      notification_reads: {
+        Row: {
+          id: string
+          notification_id: string
+          read_at: string
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          notification_id: string
+          read_at?: string
+          user_id: string
+        }
+        Update: {
+          id?: string
+          notification_id?: string
+          read_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notification_reads_notification_id_fkey"
+            columns: ["notification_id"]
+            isOneToOne: false
+            referencedRelation: "notifications"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      notifications: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          image_url: string | null
+          is_important: boolean
+          is_published: boolean
+          published_at: string | null
+          title: string
+          type: string
+          updated_at: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          id?: string
+          image_url?: string | null
+          is_important?: boolean
+          is_published?: boolean
+          published_at?: string | null
+          title: string
+          type?: string
+          updated_at?: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          image_url?: string | null
+          is_important?: boolean
+          is_published?: boolean
+          published_at?: string | null
+          title?: string
+          type?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       poll_options: {
         Row: {
