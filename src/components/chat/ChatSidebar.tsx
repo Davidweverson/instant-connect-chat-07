@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Users, X, LogOut, UserPlus, MessageSquare, Trash2, Megaphone, Settings, AtSign, Lock, UsersRound, Music2, Wand2 } from "lucide-react";
+import { NotificationsBell } from "./NotificationsBell";
 import { FlashLogo } from "@/components/FlashLogo";
 import { getRoomIcon } from "@/lib/room-icons";
 
@@ -41,6 +42,7 @@ interface ChatSidebarProps {
   mentionsUnread: number;
   onOpenAchievements: () => void;
   userXp: UserXP | null;
+  userId: string;
 }
 
 export function ChatSidebar({
@@ -70,6 +72,7 @@ export function ChatSidebar({
   mentionsUnread,
   onOpenAchievements,
   userXp,
+  userId,
 }: ChatSidebarProps) {
   const [profileEditOpen, setProfileEditOpen] = useState(false);
 
@@ -293,6 +296,7 @@ export function ChatSidebar({
               <p className="text-xs text-muted-foreground font-mono">{profile?.friend_code || "-----"}</p>
             </div>
             <div className="flex items-center gap-0.5">
+              <NotificationsBell userId={userId} onOpenChangelog={onOpenChangelog} />
               <button
                 onClick={onOpenMentions}
                 className="relative p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"

@@ -13,7 +13,10 @@ import { DMView } from "./DMView";
 import { ImageLightbox } from "./ImageLightbox";
 import { ReportModal } from "./ReportModal";
 import { ThemeToggle } from "./ThemeToggle";
-import { ChangelogModal, LATEST_VERSION } from "./ChangelogModal";
+import { ChangelogModal } from "./ChangelogModal";
+import { UpdatePopup } from "./UpdatePopup";
+import { useChangelog } from "@/hooks/useChangelog";
+import { useNotifications } from "@/hooks/useNotifications";
 import { MessageSearchModal } from "./MessageSearchModal";
 import { OfflineBanner } from "./OfflineBanner";
 import { MentionsPanel } from "./MentionsPanel";
@@ -161,13 +164,15 @@ export function ChatLayout({
   };
 
 
-  // Check for unread changelog
+  // Check for unread changelog (versão mais recente publicada no banco)
+  const { latestVersion } = useChangelog();
+  const { latestUnreadImportant, markRead: markNotificationRead } = useNotifications(userId);
   const lastReadVersion = typeof window !== "undefined" ? localStorage.getItem("flashchat_changelog_read") : null;
-  const hasUnreadChangelog = lastReadVersion !== LATEST_VERSION;
+  const hasUnreadChangelog = !!latestVersion && lastReadVersion !== latestVersion;
 
   const handleOpenChangelog = () => {
     setChangelogOpen(true);
-    localStorage.setItem("flashchat_changelog_read", LATEST_VERSION);
+    if (latestVersion) localStorage.setItem("flashchat_changelog_read", latestVersion);
   };
 
   const prevMessagesLenRef = useRef(messages.length);
@@ -226,6 +231,7 @@ export function ChatLayout({
         mentionsUnread={mentionsUnread}
         onOpenAchievements={() => setAchievementsOpen(true)}
         userXp={userXp}
+        userId={userId}
       />
 
       {activeDMFriend ? (
@@ -398,6 +404,11 @@ export function ChatLayout({
         <ThreadPanel parentId={openThreadId} kind="chat" onClose={() => setOpenThreadId(null)} />
       )}
       <FirstVisitWarning />
+      <UpdatePopup
+        notification={latestUnreadImportant}
+        onDismiss={() => latestUnreadImportant && markNotificationRead(latestUnreadImportant.id)}
+        onOpenChangelog={handleOpenChangelog}
+      />
     </div>
   );
 }

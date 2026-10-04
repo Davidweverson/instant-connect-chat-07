@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { ArrowLeft, Palette, Bell, MessageSquare, Shield, Info, Wallpaper } from "lucide-react";
 import WallpaperSection from "@/components/wallpaper/WallpaperSection";
 import { useSettings } from "@/lib/settings-context";
-import { LATEST_VERSION } from "@/components/chat/ChangelogModal";
+import { useChangelog } from "@/hooks/useChangelog";
 import { parseUserAgent } from "@/lib/parse-user-agent";
 import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
@@ -337,7 +337,7 @@ export default function Settings() {
           <div className="space-y-4">
             <div>
               <p className="text-sm text-muted-foreground">Versão</p>
-              <p className="text-foreground font-medium">{LATEST_VERSION}</p>
+              <p className="text-foreground font-medium">{latestVersion || "—"}</p>
             </div>
             <div>
               <p className="text-sm text-muted-foreground">Desenvolvido com</p>
