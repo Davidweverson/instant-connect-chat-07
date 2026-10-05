@@ -59,6 +59,7 @@ export default function Settings() {
   const navigate = useNavigate();
   const { settings, updateSettings } = useSettings();
   const { user, profile, refetchProfile } = useAuth();
+  const { latestVersion } = useChangelog();
   const [section, setSection] = useState<Section>("appearance");
   const [pushSubscribed, setPushSubscribed] = useState(false);
   const [pushLoading, setPushLoading] = useState(false);
