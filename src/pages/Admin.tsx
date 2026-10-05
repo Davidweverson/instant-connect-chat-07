@@ -1,11 +1,13 @@
 import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { Shield, ArrowLeft, Ban, CheckCircle, VolumeX, Volume2, UserCheck, Flag, MessageSquare, Clock, Search, ShieldAlert } from "lucide-react";
+import { Shield, ArrowLeft, Ban, CheckCircle, VolumeX, Volume2, UserCheck, Flag, MessageSquare, Clock, Search, ShieldAlert, Bell, ClipboardList } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { AdminBannedWords } from "@/components/chat/AdminBannedWords";
+import { AdminNotifications } from "@/components/chat/AdminNotifications";
+import { AdminChangelog } from "@/components/chat/AdminChangelog";
 
-type Tab = "moderation" | "reports" | "logs" | "words";
+type Tab = "moderation" | "reports" | "logs" | "words" | "notifications" | "changelog";
 
 interface Report {
   id: string;
@@ -51,6 +53,8 @@ export default function Admin() {
           { id: "moderation" as Tab, label: "Moderação", icon: Ban },
           { id: "reports" as Tab, label: "Denúncias", icon: Flag },
           { id: "words" as Tab, label: "Palavras", icon: ShieldAlert },
+          { id: "notifications" as Tab, label: "Avisos", icon: Bell },
+          { id: "changelog" as Tab, label: "Changelog", icon: ClipboardList },
           { id: "logs" as Tab, label: "Histórico", icon: MessageSquare },
         ]).map(({ id, label, icon: Icon }) => (
           <button
@@ -71,6 +75,8 @@ export default function Admin() {
         {tab === "moderation" && <ModerationTab />}
         {tab === "reports" && <ReportsTab />}
         {tab === "words" && <AdminBannedWords />}
+        {tab === "notifications" && <AdminNotifications />}
+        {tab === "changelog" && <AdminChangelog />}
         {tab === "logs" && <LogsTab />}
       </div>
     </div>
