@@ -14,6 +14,36 @@ export type Database = {
   }
   public: {
     Tables: {
+      account_signals: {
+        Row: {
+          created_at: string
+          device_hash: string | null
+          id: string
+          ip_hash: string | null
+          last_seen_at: string
+          ua_hash: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          device_hash?: string | null
+          id?: string
+          ip_hash?: string | null
+          last_seen_at?: string
+          ua_hash?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          device_hash?: string | null
+          id?: string
+          ip_hash?: string | null
+          last_seen_at?: string
+          ua_hash?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       achievements: {
         Row: {
           code: string
@@ -44,6 +74,30 @@ export type Database = {
           kind?: string
           name?: string
           threshold?: number
+        }
+        Relationships: []
+      }
+      ban_signals: {
+        Row: {
+          created_at: string
+          device_hash: string | null
+          id: string
+          ip_hash: string | null
+          source_user_id: string
+        }
+        Insert: {
+          created_at?: string
+          device_hash?: string | null
+          id?: string
+          ip_hash?: string | null
+          source_user_id: string
+        }
+        Update: {
+          created_at?: string
+          device_hash?: string | null
+          id?: string
+          ip_hash?: string | null
+          source_user_id?: string
         }
         Relationships: []
       }
@@ -1154,6 +1208,36 @@ export type Database = {
           },
         ]
       }
+      user_risk: {
+        Row: {
+          linked_banned_user_ids: string[]
+          reasons: string[]
+          restricted_until: string | null
+          reviewed: boolean
+          score: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          linked_banned_user_ids?: string[]
+          reasons?: string[]
+          restricted_until?: string | null
+          reviewed?: boolean
+          score?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          linked_banned_user_ids?: string[]
+          reasons?: string[]
+          restricted_until?: string | null
+          reviewed?: boolean
+          score?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           id: string
@@ -1260,6 +1344,26 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      admin_risk_overview: {
+        Args: never
+        Returns: {
+          banned: boolean
+          created_at: string
+          linked_banned: string[]
+          reasons: string[]
+          restricted_until: string
+          reviewed: boolean
+          score: number
+          shared_device_accounts: string[]
+          updated_at: string
+          user_id: string
+          username: string
+        }[]
+      }
+      admin_set_risk_restriction: {
+        Args: { _hours: number; _uid: string }
+        Returns: undefined
+      }
       apply_word_filter: { Args: { input_text: string }; Returns: string }
       apply_xp: { Args: { _user_id: string }; Returns: undefined }
       are_friends: {
@@ -1278,6 +1382,7 @@ export type Database = {
           id: string
         }[]
       }
+      evaluate_account_risk: { Args: { _uid: string }; Returns: undefined }
       generate_friend_code: { Args: never; Returns: string }
       generate_invite_code: { Args: never; Returns: string }
       has_role: {
@@ -1291,6 +1396,10 @@ export type Database = {
       is_group_member: {
         Args: { _gid: string; _uid: string }
         Returns: boolean
+      }
+      record_account_signal: {
+        Args: { _device: string; _ip: string; _ua: string; _uid: string }
+        Returns: undefined
       }
       redeem_group_invite: { Args: { _code: string }; Returns: string }
       reorder_group_channel_categories: {
