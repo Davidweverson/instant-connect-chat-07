@@ -84,7 +84,7 @@ export function ChatSidebar({
 
       <aside
         className={`
-          fixed md:relative z-50 md:z-auto
+          fixed md:relative z-50 md:z-30
           top-0 left-0 h-full w-64
           glass-panel border-r border-sidebar-border/40
           flex flex-col
