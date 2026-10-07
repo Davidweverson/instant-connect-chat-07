@@ -97,6 +97,17 @@ export function useAuth() {
     return () => subscription.unsubscribe();
   }, [fetchProfile]);
 
+  // Registra sinais de dispositivo/rede no backend (anti-evasão de ban)
+  useEffect(() => {
+    if (!user?.id) return;
+    const key = `fc_signal_${user.id}`;
+    if (sessionStorage.getItem(key)) return;
+    sessionStorage.setItem(key, "1");
+    supabase.functions
+      .invoke("record-signal", { body: { device_id: getCurrentDeviceId() } })
+      .catch(() => {});
+  }, [user?.id]);
+
   useEffect(() => {
     if (!user?.id) return;
 
