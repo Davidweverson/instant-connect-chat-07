@@ -6,8 +6,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { AdminBannedWords } from "@/components/chat/AdminBannedWords";
 import { AdminNotifications } from "@/components/chat/AdminNotifications";
 import { AdminChangelog } from "@/components/chat/AdminChangelog";
+import { AdminEvasion } from "@/components/chat/AdminEvasion";
 
-type Tab = "moderation" | "reports" | "logs" | "words" | "notifications" | "changelog";
+type Tab = "moderation" | "reports" | "logs" | "words" | "notifications" | "changelog" | "evasion";
 
 interface Report {
   id: string;
@@ -52,6 +53,7 @@ export default function Admin() {
         {([
           { id: "moderation" as Tab, label: "Moderação", icon: Ban },
           { id: "reports" as Tab, label: "Denúncias", icon: Flag },
+          { id: "evasion" as Tab, label: "Evasão", icon: ShieldAlert },
           { id: "words" as Tab, label: "Palavras", icon: ShieldAlert },
           { id: "notifications" as Tab, label: "Avisos", icon: Bell },
           { id: "changelog" as Tab, label: "Changelog", icon: ClipboardList },
@@ -78,6 +80,7 @@ export default function Admin() {
         {tab === "notifications" && <AdminNotifications />}
         {tab === "changelog" && <AdminChangelog />}
         {tab === "logs" && <LogsTab />}
+        {tab === "evasion" && <AdminEvasion />}
       </div>
     </div>
   );

@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import type { User } from "@supabase/supabase-js";
-import { recordLoginAndCheckNewDevice } from "@/lib/security-alerts";
+import { recordLoginAndCheckNewDevice, getCurrentDeviceId } from "@/lib/security-alerts";
 import { toast } from "@/hooks/use-toast";
 
 export interface Profile {
