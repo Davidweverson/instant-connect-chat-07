@@ -97,15 +97,30 @@ export function useAuth() {
     return () => subscription.unsubscribe();
   }, [fetchProfile]);
 
-  // Registra sinais de dispositivo/rede no backend (anti-evasão de ban)
+  // Registra sinais de dispositivo/rede no backend (anti-evasão de ban).
+  // Só marca como feito após sucesso; tenta novamente em caso de falha.
   useEffect(() => {
     if (!user?.id) return;
     const key = `fc_signal_${user.id}`;
     if (sessionStorage.getItem(key)) return;
-    sessionStorage.setItem(key, "1");
-    supabase.functions
-      .invoke("record-signal", { body: { device_id: getCurrentDeviceId() } })
-      .catch(() => {});
+    let cancelled = false;
+    const attempt = async (n: number) => {
+      if (cancelled) return;
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session || session.user.id !== user.id) throw new Error("no session yet");
+        const { error } = await supabase.functions.invoke("record-signal", {
+          body: { device_id: getCurrentDeviceId() },
+        });
+        if (error) throw error;
+        sessionStorage.setItem(key, "1");
+      } catch (e) {
+        console.warn("[record-signal] falhou, tentativa", n + 1, e);
+        if (n < 5) setTimeout(() => attempt(n + 1), 1500 * (n + 1));
+      }
+    };
+    attempt(0);
+    return () => { cancelled = true; };
   }, [user?.id]);
 
   useEffect(() => {

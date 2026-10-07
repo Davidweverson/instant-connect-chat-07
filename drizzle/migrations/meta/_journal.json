@@ -50,6 +50,13 @@
       "when": 1791336578482,
       "tag": "0006_profiles_column_update_grants",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1791336800359,
+      "tag": "0007_evasion_diagnostics_and_unregistered_guard",
+      "breakpoints": true
     }
   ]
 }

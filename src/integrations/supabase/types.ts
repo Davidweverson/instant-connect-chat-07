@@ -1152,6 +1152,30 @@ export type Database = {
         }
         Relationships: []
       }
+      risk_events: {
+        Row: {
+          created_at: string
+          detail: Json
+          event: string
+          id: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          detail?: Json
+          event: string
+          id?: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          detail?: Json
+          event?: string
+          id?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       rooms: {
         Row: {
           allowed_roles: string[]
@@ -1344,6 +1368,15 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      admin_risk_events: {
+        Args: { _limit?: number }
+        Returns: {
+          created_at: string
+          detail: Json
+          event: string
+          username: string
+        }[]
+      }
       admin_risk_overview: {
         Args: never
         Returns: {
