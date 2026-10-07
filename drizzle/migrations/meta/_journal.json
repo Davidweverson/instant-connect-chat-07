@@ -29,6 +29,13 @@
       "when": 1791328924160,
       "tag": "0003_ban_evasion_protection",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1791335274595,
+      "tag": "0004_allow_service_role_moderation",
+      "breakpoints": true
     }
   ]
 }
