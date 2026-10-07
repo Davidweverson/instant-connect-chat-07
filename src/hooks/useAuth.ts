@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import type { User } from "@supabase/supabase-js";
-import { recordLoginAndCheckNewDevice } from "@/lib/security-alerts";
+import { recordLoginAndCheckNewDevice, getCurrentDeviceId } from "@/lib/security-alerts";
 import { toast } from "@/hooks/use-toast";
 
 export interface Profile {
@@ -96,6 +96,17 @@ export function useAuth() {
 
     return () => subscription.unsubscribe();
   }, [fetchProfile]);
+
+  // Registra sinais de dispositivo/rede no backend (anti-evasão de ban)
+  useEffect(() => {
+    if (!user?.id) return;
+    const key = `fc_signal_${user.id}`;
+    if (sessionStorage.getItem(key)) return;
+    sessionStorage.setItem(key, "1");
+    supabase.functions
+      .invoke("record-signal", { body: { device_id: getCurrentDeviceId() } })
+      .catch(() => {});
+  }, [user?.id]);
 
   useEffect(() => {
     if (!user?.id) return;
