@@ -43,6 +43,13 @@
       "when": 1791335775786,
       "tag": "0005_restrict_open_read_policies",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1791336578482,
+      "tag": "0006_profiles_column_update_grants",
+      "breakpoints": true
     }
   ]
 }
