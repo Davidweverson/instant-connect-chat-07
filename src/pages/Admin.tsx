@@ -49,7 +49,7 @@ export default function Admin() {
       </header>
 
       {/* Tabs */}
-      <div className="flex border-b border-border px-4">
+      <div className="flex border-b border-border px-4 overflow-x-auto">
         {([
           { id: "moderation" as Tab, label: "Moderação", icon: Ban },
           { id: "reports" as Tab, label: "Denúncias", icon: Flag },
