@@ -129,6 +129,46 @@ Deno.serve(async (req) => {
       }
     }
 
+    // Broadcast (no recipients): only allowed for public chat, and the content is
+    // taken from the sender's own message just saved in the database — never from the request.
+    let broadcastBody: string | null = null;
+    let broadcastRoom: string | null = null;
+    if (!allowedRecipients) {
+      if (payload.type !== "chat") {
+        return new Response(JSON.stringify({ error: "Invalid recipients" }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      const { data: prof } = await supabase
+        .from("profiles").select("banned, muted_until").eq("id", verifiedSenderId).maybeSingle();
+      if (!prof || prof.banned || (prof.muted_until && new Date(prof.muted_until) > new Date())) {
+        return new Response(JSON.stringify({ error: "Forbidden" }), {
+          status: 403,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      const since = new Date(Date.now() - 60_000).toISOString();
+      const { data: lastMsg } = await supabase
+        .from("chat_messages")
+        .select("text, room_id")
+        .eq("user_id", verifiedSenderId)
+        .gte("created_at", since)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (!lastMsg) {
+        return new Response(JSON.stringify({ sent: 0, total: 0 }), {
+          status: 200,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      const { data: room } = await supabase
+        .from("rooms").select("name").eq("id", lastMsg.room_id).maybeSingle();
+      broadcastBody = lastMsg.text || "📎 Anexo";
+      broadcastRoom = room?.name?.trim() || lastMsg.room_id;
+    }
+
     let query = supabase.from("push_subscriptions").select("user_id, subscription, endpoint");
     if (allowedRecipients) {
       query = query.in("user_id", allowedRecipients);
@@ -138,18 +178,21 @@ Deno.serve(async (req) => {
     const { data: subs, error } = await query;
     if (error) throw error;
 
-
+    const roomName = broadcastRoom ?? String(payload.roomName || "chat").slice(0, 60);
     const title =
       payload.type === "chat"
-        ? `${verifiedSenderName} em #${payload.roomName || "chat"}`
+        ? `${verifiedSenderName} em #${roomName}`
         : payload.type === "dm"
         ? `Mensagem de ${verifiedSenderName}`
         : `${verifiedSenderName} adicionou você`;
 
+    const url = typeof payload.url === "string" && payload.url.startsWith("/") && !payload.url.startsWith("//")
+      ? payload.url.slice(0, 200)
+      : "/";
     const notif = JSON.stringify({
       title,
-      body: payload.body.slice(0, 120),
-      url: payload.url || "/",
+      body: (broadcastBody ?? String(payload.body)).slice(0, 120),
+      url,
       tag: payload.type + verifiedSenderId,
     });
 
