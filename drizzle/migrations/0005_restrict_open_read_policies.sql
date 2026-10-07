@@ -1,0 +1,18 @@
+DROP POLICY "Anyone view achievements" ON public.achievements;
+CREATE POLICY "Signed-in view achievements" ON public.achievements FOR SELECT TO authenticated USING (auth.uid() IS NOT NULL);
+DROP POLICY "Authenticated read chat_messages" ON public.chat_messages;
+CREATE POLICY "Authenticated read chat_messages" ON public.chat_messages FOR SELECT TO authenticated USING (auth.uid() IS NOT NULL);
+DROP POLICY "Anyone can view reactions" ON public.message_reactions;
+CREATE POLICY "Signed-in view reactions" ON public.message_reactions FOR SELECT TO authenticated USING (auth.uid() IS NOT NULL);
+DROP POLICY "Anyone can view options" ON public.poll_options;
+CREATE POLICY "Signed-in view options" ON public.poll_options FOR SELECT TO authenticated USING (auth.uid() IS NOT NULL);
+DROP POLICY "Anyone can view votes" ON public.poll_votes;
+CREATE POLICY "Signed-in view votes" ON public.poll_votes FOR SELECT TO authenticated USING (auth.uid() IS NOT NULL);
+DROP POLICY "Authenticated can read profiles" ON public.profiles;
+CREATE POLICY "Authenticated can read profiles" ON public.profiles FOR SELECT TO authenticated USING (auth.uid() IS NOT NULL);
+DROP POLICY "Anyone can view rooms" ON public.rooms;
+CREATE POLICY "Signed-in view rooms" ON public.rooms FOR SELECT TO authenticated USING (auth.uid() IS NOT NULL);
+DROP POLICY "Anyone view user_achievements" ON public.user_achievements;
+CREATE POLICY "Signed-in view user_achievements" ON public.user_achievements FOR SELECT TO authenticated USING (auth.uid() IS NOT NULL);
+DROP POLICY "Anyone view xp" ON public.user_xp;
+CREATE POLICY "Signed-in view xp" ON public.user_xp FOR SELECT TO authenticated USING (auth.uid() IS NOT NULL);
